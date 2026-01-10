@@ -14,7 +14,8 @@ import uuid
 import asyncio
 
 # Import pipeline
-from pipeline import AnalysisPipeline
+from app.pipeline import AnalysisPipeline
+
 
 # Initialize FastAPI
 app = FastAPI(
