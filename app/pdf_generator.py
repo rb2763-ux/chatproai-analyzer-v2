@@ -3,11 +3,12 @@ CHATPRO AI ANALYZER - PDF REPORT GENERATOR
 Professional 7-page HTML reports with sources
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 import os
 
 class PDFReportGenerator:
+
     """
     Generate professional HTML reports
     
@@ -32,7 +33,7 @@ class PDFReportGenerator:
         company_name: str,
         industry: str,
         output_path: str,
-        sources: Dict = None
+        sources: List[Dict] = None
     ) -> str:
         """
         Generate HTML report
@@ -46,7 +47,7 @@ class PDFReportGenerator:
             analysis_data,
             company_name,
             industry,
-            sources or {}
+            sources or []
         )
         
         # Save HTML for debugging
@@ -66,7 +67,7 @@ class PDFReportGenerator:
         analysis_data: Dict,
         company_name: str,
         industry: str,
-        sources: Dict = None
+        sources: List[Dict] = None
     ) -> str:
         """
         Generate complete HTML report
