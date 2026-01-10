@@ -12,7 +12,7 @@ import uuid
 from .crawler import WebsiteCrawler
 from .analyzer import AIAnalyzer
 from .pdf_generator import PDFReportGenerator
-from .email_sender import EmailSender
+
 from .brevo_crm import BrevoCRM
 
 class AnalysisPipeline:
@@ -34,7 +34,7 @@ class AnalysisPipeline:
         self.crawler = None
         self.analyzer = AIAnalyzer()
         self.pdf_generator = PDFReportGenerator()
-        self.email_sender = EmailSender()
+        
         self.brevo_crm = BrevoCRM()
     
     async def process(
@@ -97,29 +97,9 @@ class AnalysisPipeline:
             
             print(f"[{analysis_id}] ✅ PDF generated: {generated_path}")
             
-            # Step 4: Send Email
-            print(f"[{analysis_id}] Step 4: Sending email to {email}...")
-            
-            # Get ROI data
-            roi_data = analysis_data['roi_calculation']['summary']
-            
-            # Build report URL (will be full URL in production)
-            report_url = f"http://localhost:8000/api/report/{analysis_id}"
-            
-            email_result = self.email_sender.send_analysis_report(
-                to_email=email,
-                company_name=company_name,
-                website_url=website_url,
-                roi_monat=roi_data['total_roi_monat'],
-                roi_multiplikator=roi_data['roi_multiplikator'],
-                report_url=report_url,
-                analysis_id=analysis_id
-            )
-            
-            if email_result['status'] == 'success':
-                print(f"[{analysis_id}] ✅ Email sent: {email_result['message_id']}")
-            else:
-                print(f"[{analysis_id}] ⚠️  Email failed: {email_result.get('error', 'Unknown')}")
+            # Step 4: Save to Brevo CRM (Email wird später über Brevo gesendet)
+
+           
             
             # Step 5: Save to Brevo CRM
             print(f"[{analysis_id}] Step 5: Saving to Brevo CRM...")
