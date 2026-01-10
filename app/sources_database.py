@@ -168,7 +168,7 @@ def get_sources_for_industry(industry: str) -> list:
 
 def format_sources_for_prompt(sources: list) -> str:
     """Format sources for OpenAI prompt"""
-     formatted = []
+    formatted = []
     for source in sources:
         formatted.append(f"""
 [Source {source.get('id', 'N/A')}] {source.get('title', 'N/A')}
@@ -176,4 +176,3 @@ URL: {source.get('url', '#')}
 Data: {source.get('data', {})}
 """)
     return "\n".join(formatted)
-
