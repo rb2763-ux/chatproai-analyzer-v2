@@ -26,7 +26,7 @@ class AnalysisPipeline:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
         
-        self.crawler = WebCrawler()
+        self.crawler = WebsiteCrawler()
         self.analyzer = AIAnalyzer()
         self.pdf_generator = PDFReportGenerator()
         self.brevo_crm = BrevoCRM()
