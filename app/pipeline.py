@@ -41,18 +41,25 @@ class AnalysisPipeline:
         analysis_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Process complete analysis pipeline with comprehensive error handling
+        Process complete analysis pipeline
         
+        Args:
+            website_url: Target website URL
+            industry: Business industry
+            email: Contact email
+            company_name: Company name
+            analysis_id: Optional analysis ID (generated if not provided)
+            
         Returns:
-            Dict with status, analysis_id, and results or error information
+            Dict with analysis results and metadata
         """
+        
         if not analysis_id:
             analysis_id = str(uuid.uuid4())
         
-        start_time = datetime.now()
-        
         logger.info(f"[{analysis_id[:8]}] Starting analysis for {website_url}")
-        logger.info(f"[{analysis_id[:8]}] Industry: {industry}, Company: {company_name}")
+        
+        start_time = datetime.now()
         
         try:
             # STEP 1: Web Crawling
@@ -73,14 +80,13 @@ class AnalysisPipeline:
                 crawler_data = {}
             
             crawl_time = (datetime.now() - crawl_start).total_seconds()
-            logger.info(f"[{analysis_id[:8]}] ✅ Crawling complete ({crawl_time:.1f}s)")
+            logger.info(f"[{analysis_id[:8]}] Crawling complete: {crawl_time:.1f}s")
             
             # STEP 2: AI Analysis
             analysis_start = datetime.now()
             logger.info(f"[{analysis_id[:8]}] Step 2/4: AI Analysis with OpenAI...")
             
             try:
-                # Get relevant sources
                 # Sources are fetched inside analyzer.analyze()
                 
                 analysis_result = self.analyzer.analyze(
@@ -97,24 +103,26 @@ class AnalysisPipeline:
             except Exception as analysis_error:
                 logger.error(f"[{analysis_id[:8]}] AI Analysis failed: {str(analysis_error)}")
                 logger.error(f"[{analysis_id[:8]}] Traceback:\n{traceback.format_exc()}")
-                raise
+                return {
+                    "status": "failed",
+                    "error": str(analysis_error),
+                    "analysis_id": analysis_id,
+                    "processing_time": (datetime.now() - start_time).total_seconds()
+                }
             
             analysis_time = (datetime.now() - analysis_start).total_seconds()
+            logger.info(f"[{analysis_id[:8]}] AI Analysis complete: {analysis_time:.1f}s")
             
-            # Safe access to analysis results
+            # Log analysis results
             roi_data = analysis_result.get("roi_calculation", {})
-            if not isinstance(roi_data, dict):
-                logger.warning(f"[{analysis_id[:8]}] roi_calculation is not a dict: {type(roi_data)}")
-                roi_data = {}
+            logger.info(f"[{analysis_id[:8]}] ROI: {roi_data.get('monthly_roi', 0)} | Multiplier: {roi_data.get('roi_multiplier', 0)}x")
+            logger.info(f"[{analysis_id[:8]}] Chatbot Priority: {analysis_result.get('chatbot_priority', 'UNKNOWN')}")
+            logger.info(f"[{analysis_id[:8]}] Pain Points: {len(analysis_result.get('pain_points', []))}")
+            logger.info(f"[{analysis_id[:8]}] Recommendations: {len(analysis_result.get('recommendations', []))}") 
             
-            logger.info(f"[{analysis_id[:8]}] ✅ Analysis complete ({analysis_time:.1f}s)")
-            logger.info(f"[{analysis_id[:8]}]   - Monthly ROI: €{roi_data.get('monthly_roi', 0):,.0f}")
-            logger.info(f"[{analysis_id[:8]}]   - ROI Multiplier: {roi_data.get('roi_multiplier', 0):.1f}x")
-            logger.info(f"[{analysis_id[:8]}]   - Priority: {analysis_result.get('chatbot_priority', 'MEDIUM')}")
-            
-            # STEP 3: Generate PDF Report
+            # STEP 3: PDF Generation
             pdf_start = datetime.now()
-            logger.info(f"[{analysis_id[:8]}] Step 3/4: Generating PDF Report...")
+            logger.info(f"[{analysis_id[:8]}] Step 3/4: Generating PDF report...")
             
             try:
                 report_filename = f"chatpro_analyse_{analysis_id[:8]}.html"
@@ -125,70 +133,61 @@ class AnalysisPipeline:
                     analysis_data=analysis_result,
                     company_name=company_name,
                     industry=industry,
-                    output_path=report_path,
-                    sources=sources
+                    output_path=report_path
                 )
                 
                 if not generated_path or not os.path.exists(generated_path):
                     logger.error(f"[{analysis_id[:8]}] PDF generation failed - file not created")
-                    raise ValueError("PDF file was not created")
+                    generated_path = None
                     
             except Exception as pdf_error:
                 logger.error(f"[{analysis_id[:8]}] PDF generation failed: {str(pdf_error)}")
                 logger.error(f"[{analysis_id[:8]}] Traceback:\n{traceback.format_exc()}")
-                raise
+                generated_path = None
             
             pdf_time = (datetime.now() - pdf_start).total_seconds()
-            logger.info(f"[{analysis_id[:8]}] ✅ PDF generated ({pdf_time:.1f}s)")
+            logger.info(f"[{analysis_id[:8]}] PDF generated: {pdf_time:.1f}s")
             
             # STEP 4: Save to Brevo CRM
             crm_start = datetime.now()
             logger.info(f"[{analysis_id[:8]}] Step 4/4: Saving to Brevo CRM...")
             
             try:
-                crm_result = self.brevo_crm.save_lead(
+                crm_response = await self.brevo_crm.save_lead(
                     email=email,
                     company_name=company_name,
                     website_url=website_url,
                     industry=industry,
-                    roi_monat=roi_data.get("monthly_roi", 0),
-                    has_chatbot=crawler_data.get("has_chatbot", False),
-                    chatbot_priority=analysis_result.get("chatbot_priority", "MEDIUM"),
                     analysis_id=analysis_id,
+                    has_chatbot=crawler_data.get("has_chatbot", False),
+                    roi_monthly=roi_data.get("monthly_roi", 0),
+                    roi_multiplier=roi_data.get("roi_multiplier", 0),
                     chatbot_type=crawler_data.get("chatbot_type", "")
                 )
                 
-                # Defensive check
-                if not isinstance(crm_result, dict):
-                    logger.warning(f"[{analysis_id[:8]}] CRM result is not a dict: {type(crm_result)}")
-                    crm_result = {"status": "unknown"}
-                    
+                logger.info(f"[{analysis_id[:8]}] Lead saved to Brevo: {crm_response}")
+                
             except Exception as crm_error:
                 logger.error(f"[{analysis_id[:8]}] Brevo CRM save failed: {str(crm_error)}")
                 logger.error(f"[{analysis_id[:8]}] Traceback:\n{traceback.format_exc()}")
-                crm_result = {"status": "error", "error": str(crm_error)}
             
             crm_time = (datetime.now() - crm_start).total_seconds()
             
-            if crm_result.get("status") == "success":
-                logger.info(f"[{analysis_id[:8]}] ✅ Lead saved to Brevo ({crm_time:.1f}s)")
-            else:
-                logger.warning(f"[{analysis_id[:8]}] ⚠️  Brevo save failed: {crm_result.get('error', 'Unknown')}")
-            
-            # FINAL RESULTS
+            # Calculate total time
             total_time = (datetime.now() - start_time).total_seconds()
-            logger.info(f"[{analysis_id[:8]}] ✅ ANALYSIS COMPLETED")
-            logger.info(f"[{analysis_id[:8]}] Total Time: {total_time:.1f}s")
             
+            logger.info(f"[{analysis_id[:8]}] ANALYSIS COMPLETED")
+            logger.info(f"[{analysis_id[:8]}] Total Time: {total_time:.1f}s | Crawl: {crawl_time:.1f}s | AI Analysis: {analysis_time:.1f}s | PDF Gen: {pdf_time:.1f}s | CRM: {crm_time:.1f}s")
+            
+            # Return success response
             return {
                 "status": "completed",
                 "analysis_id": analysis_id,
                 "report_path": generated_path,
-                "report_filename": report_filename,
+                "report_filename": report_filename if generated_path else None,
                 "roi_monat": roi_data.get("monthly_roi", 0),
                 "roi_multiplier": roi_data.get("roi_multiplier", 0),
                 "break_even_months": roi_data.get("break_even_months", 0),
-                "chatbot_priority": analysis_result.get("chatbot_priority", "MEDIUM"),
                 "has_chatbot": crawler_data.get("has_chatbot", False),
                 "chatbot_type": crawler_data.get("chatbot_type", ""),
                 "processing_time": {
@@ -197,28 +196,17 @@ class AnalysisPipeline:
                     "analysis": analysis_time,
                     "pdf": pdf_time,
                     "crm": crm_time
-                },
-                "brevo_status": crm_result.get("status", "unknown")
+                }
             }
             
         except Exception as e:
             error_time = (datetime.now() - start_time).total_seconds()
-            error_type = type(e).__name__
-            error_message = str(e)
-            full_traceback = traceback.format_exc()
-            
-            logger.error(f"[{analysis_id[:8]}] ❌ ANALYSIS FAILED")
-            logger.error(f"[{analysis_id[:8]}] Error Type: {error_type}")
-            logger.error(f"[{analysis_id[:8]}] Error: {error_message}")
-            logger.error(f"[{analysis_id[:8]}] Full Traceback:\n{full_traceback}")
-            logger.error(f"[{analysis_id[:8]}] Time elapsed: {error_time:.1f}s")
+            logger.error(f"[{analysis_id[:8]}] ANALYSIS FAILED: {str(e)}")
+            logger.error(f"[{analysis_id[:8]}] Traceback:\n{traceback.format_exc()}")
             
             return {
                 "status": "failed",
-                "error": error_message,
-                "error_type": error_type,
-                "traceback": full_traceback,  # FULL STACK TRACE
+                "error": str(e),
                 "analysis_id": analysis_id,
                 "processing_time": error_time
             }
-                                                                                                                                          
