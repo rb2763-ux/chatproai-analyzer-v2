@@ -8,7 +8,6 @@ from datetime import datetime
 import os
 
 class PDFReportGenerator:
-
     """
     Generate professional HTML reports
     
@@ -121,7 +120,7 @@ class PDFReportGenerator:
         
         # Build sources HTML
         sources_html = ""
-                if sources:
+        if sources:
             for source in sources:
                 source_id = source.get('id', 'N/A')
                 title = source.get('title', 'N/A')
@@ -132,7 +131,6 @@ class PDFReportGenerator:
                     <a href="{url}" target="_blank">{url}</a>
                 </div>
                 """
-
         else:
             sources_html = "<p>Quellen werden geladen...</p>"
         
@@ -251,7 +249,7 @@ class PDFReportGenerator:
         
         .roi-box .roi-stats {{
             display: flex;
-            justify-content: space-around;
+            justify-space-around;
             margin-top: 30px;
         }}
         
