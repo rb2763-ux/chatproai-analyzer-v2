@@ -121,12 +121,15 @@ class PDFReportGenerator:
         
         # Build sources HTML
         sources_html = ""
-        if sources:
-            for source_id, source_data in sources.items():
+                if sources:
+            for source in sources:
+                source_id = source.get('id', 'N/A')
+                title = source.get('title', 'N/A')
+                url = source.get('url', '#')
                 sources_html += f"""
                 <div class="source-item">
-                    <strong>[{source_id}] {source_data.get('title', 'N/A')}</strong><br>
-                    <a href="{source_data.get('url', '#')}" target="_blank">{source_data.get('url', '#')}</a>
+                    <strong>[{source_id}] {title}</strong><br>
+                    <a href="{url}" target="_blank">{url}</a>
                 </div>
                 """
         else:
