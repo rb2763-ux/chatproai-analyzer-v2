@@ -9,7 +9,7 @@ import traceback
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from .crawler import WebCrawler
+from .crawler import WebsiteCrawler
 from .analyzer import AIAnalyzer
 from .pdf_generator import PDFReportGenerator
 from .brevo_crm import BrevoCRM
