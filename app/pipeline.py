@@ -75,12 +75,22 @@ class AnalysisPipeline:
             
             logger.info(f"[{analysis_id[:8]}] Crawl complete. Has chatbot: {crawler_data.get('has_chatbot', False)}")
             
-            # STEP 2: AI Analysis
-            logger.info(f"[{analysis_id[:8]}] Step 2/5: Running AI analysis...")
+            # STEP 2: Get industry sources (BEFORE analysis!)
+            logger.info(f"[{analysis_id[:8]}] Step 2/5: Loading industry sources...")
+            try:
+                sources = get_sources_for_industry(industry)
+                logger.info(f"[{analysis_id[:8]}] Loaded {len(sources)} sources for industry: {industry}")
+            except Exception as e:
+                logger.error(f"[{analysis_id[:8]}] Failed to load sources: {e}")
+                sources = []
+            
+            # STEP 3: AI Analysis (WITH sources!)
+            logger.info(f"[{analysis_id[:8]}] Step 3/5: Running AI analysis...")
             analysis_result = self.analyzer.analyze(
                 crawler_data=crawler_data,
                 industry=industry,
-                company_name=company_name
+                company_name=company_name,
+                sources=sources  # ← PASS SOURCES HERE!
             )
             
             # Defensive check
@@ -89,15 +99,6 @@ class AnalysisPipeline:
                 analysis_result = {}
             
             logger.info(f"[{analysis_id[:8]}] Analysis complete")
-            
-            # STEP 3: Get industry sources
-            logger.info(f"[{analysis_id[:8]}] Step 3/5: Loading industry sources...")
-            try:
-                sources = get_sources_for_industry(industry)
-                logger.info(f"[{analysis_id[:8]}] Loaded {len(sources)} sources for industry: {industry}")
-            except Exception as e:
-                logger.error(f"[{analysis_id[:8]}] Failed to load sources: {e}")
-                sources = []
             
             # STEP 4: Generate PDF Report
             pdf_start = datetime.now()
@@ -144,7 +145,7 @@ class AnalysisPipeline:
                     company_name=company_name,
                     website_url=website_url,
                     industry=industry,
-                    roi_monat=int(roi_data.get("monthly_roi", 0)),
+                    roi_monat=int(roi_data.get("monthly_roi_euro", 0)),
                     has_chatbot=crawler_data.get("has_chatbot", False),
                     chatbot_priority=chatbot_priority,
                     analysis_id=analysis_id,

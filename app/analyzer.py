@@ -1,331 +1,283 @@
 """
-CHATPRO AI ANALYZER - AI-POWERED WEBSITE ANALYSIS
-OpenAI GPT-4 Integration with Structured Outputs
+ChatPro AI - Business Analyzer
+PRODUCTION-READY VERSION with structured outputs and professional analysis
 """
-
 import os
 import json
-from typing import Dict, List, Optional
+import logging
+from typing import Dict, Any, List
 from openai import OpenAI
-from .sources_database import get_sources_for_industry, format_sources_for_prompt
+from pydantic import BaseModel, Field
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# PYDANTIC MODELS FOR STRUCTURED OUTPUT
+# ============================================================================
+
+class PainPoint(BaseModel):
+    """Structured pain point with business focus"""
+    title: str = Field(description="Clear, business-focused title (e.g., 'Low Mobile Conversion Rate')")
+    category: str = Field(description="Category: Technology, Customer Experience, Marketing, Operations, or Revenue")
+    description: str = Field(description="Detailed description of the problem")
+    business_impact: str = Field(description="Estimated business impact (€ or % if possible)")
+    evidence: str = Field(description="Concrete evidence from website analysis")
+    priority: str = Field(description="Priority: HIGH, MEDIUM, or LOW")
+
+
+class Recommendation(BaseModel):
+    """Structured recommendation with actionable steps"""
+    title: str = Field(description="Clear, actionable title (e.g., 'Implement AI-Powered Chatbot')")
+    description: str = Field(description="Detailed description with concrete steps")
+    business_value: str = Field(description="Expected ROI or KPI improvement")
+    implementation_effort: str = Field(description="Estimated time and cost")
+    priority: str = Field(description="Priority: HIGH, MEDIUM, or LOW")
+    quick_win: bool = Field(description="True if this is a quick win (< 1 month)")
+
+
+class ROICalculation(BaseModel):
+    """Structured ROI calculation with formula"""
+    monthly_roi_euro: int = Field(description="Monthly ROI in Euro")
+    roi_multiplier: float = Field(description="ROI multiplier (e.g., 3.5x)")
+    break_even_months: int = Field(description="Break-even period in months")
+    formula_explanation: str = Field(description="Explanation of how ROI was calculated")
+    assumptions: List[str] = Field(description="List of assumptions used in calculation")
+    
+
+class AnalysisResult(BaseModel):
+    """Complete structured analysis output"""
+    executive_summary: str = Field(description="2-3 sentence summary of key findings")
+    company_overview: str = Field(description="Brief overview of company based on website")
+    methodology: str = Field(description="How the analysis was conducted")
+    
+    pain_points: List[PainPoint] = Field(description="3-7 identified pain points")
+    recommendations: List[Recommendation] = Field(description="3-7 actionable recommendations")
+    roi_calculation: ROICalculation = Field(description="Detailed ROI calculation")
+    
+    chatbot_priority: str = Field(description="Chatbot priority: HIGH, MEDIUM, or LOW")
+    key_findings: List[str] = Field(description="3-5 bullet point key findings")
+    next_steps: List[str] = Field(description="3-5 immediate next steps")
+
+
+# ============================================================================
+# AI ANALYZER CLASS
+# ============================================================================
 
 class AIAnalyzer:
-    """AI-powered website analysis using OpenAI GPT-4"""
+    """
+    Professional Business Analyzer using OpenAI GPT-4 with Structured Outputs
+    """
     
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model = "gpt-4o-2024-08-06"  # Structured Outputs support
+        """Initialize OpenAI client"""
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable not set")
         
-    def analyze(self, crawler_data: dict, industry: str, company_name: str = "") -> dict:
+        self.client = OpenAI(api_key=api_key)
+        self.model = "gpt-4o-2024-08-06"  # Supports Structured Outputs
+        logger.info(f"AIAnalyzer initialized with model: {self.model}")
+    
+    def _build_system_prompt(self, industry: str, sources_context: str) -> str:
+        """Build comprehensive system prompt"""
+        return f"""You are a Senior Business Analyst specializing in the {industry} industry.
+
+YOUR ROLE:
+You conduct professional business analyses for companies, providing data-driven insights and actionable recommendations.
+
+YOUR TASK:
+Analyze the provided website data and create a comprehensive business analysis report.
+
+CRITICAL REQUIREMENTS:
+
+1. ROI CALCULATION MUST BE REALISTIC:
+   - Base calculations on actual website traffic data
+   - Use industry benchmarks from the provided sources
+   - Show your calculation formula
+   - List all assumptions clearly
+   - Example formula: (Expected Annual Revenue Increase - Annual Costs) / Annual Costs × 100
+
+2. PAIN POINTS MUST BE BUSINESS-FOCUSED:
+   - NOT technical jargon like "Mobile: 7 Nicht optimiert"
+   - YES business language like "Mobile visitors have 40% higher bounce rate, losing ~€X monthly"
+   - Categorize: Technology, Customer Experience, Marketing, Operations, Revenue
+   - Prioritize by business impact
+   - Provide concrete evidence from website data
+
+3. RECOMMENDATIONS MUST BE ACTIONABLE:
+   - NOT vague like "Improve website"
+   - YES specific like "Implement AI chatbot to handle 80% of FAQ inquiries, saving 25h/week staff time"
+   - Include implementation effort estimate
+   - Show expected business value
+   - Mark quick wins (< 1 month)
+
+4. USE INDUSTRY DATA:
+{sources_context}
+
+5. LANGUAGE:
+   - Write in clear, professional German
+   - Avoid technical jargon
+   - Focus on business value
+   - Be specific with numbers
+
+ANALYSIS METHODOLOGY:
+1. Analyze website performance (mobile, speed, chatbot presence)
+2. Estimate current inquiry volume and conversion rates
+3. Calculate potential improvements based on industry benchmarks
+4. Prioritize recommendations by ROI
+5. Provide realistic implementation roadmap
+
+OUTPUT:
+Return a complete AnalysisResult object with all fields filled professionally."""
+
+    def _build_user_prompt(self, crawler_data: Dict, company_name: str) -> str:
+        """Build user prompt with website data"""
+        
+        # Extract key data points
+        has_chatbot = crawler_data.get("has_chatbot", False)
+        chatbot_type = crawler_data.get("chatbot_type", "None")
+        is_mobile_friendly = crawler_data.get("is_mobile_friendly", False)
+        meta_description = crawler_data.get("meta_description", "")
+        page_title = crawler_data.get("page_title", "")
+        
+        # Build prompt
+        prompt = f"""COMPANY TO ANALYZE: {company_name}
+
+WEBSITE DATA:
+- Page Title: {page_title}
+- Meta Description: {meta_description}
+- Has Chatbot: {has_chatbot}
+- Chatbot Type: {chatbot_type}
+- Mobile Friendly: {is_mobile_friendly}
+
+TASK:
+Create a comprehensive business analysis for {company_name}.
+
+FOCUS AREAS:
+1. Current digital presence assessment
+2. Customer experience analysis
+3. Automation potential (especially chatbot)
+4. Revenue optimization opportunities
+5. Competitive positioning
+
+Remember:
+- Be realistic with numbers
+- Base ROI on industry data
+- Provide actionable insights
+- Show clear business value"""
+
+        return prompt
+
+    def analyze(
+        self,
+        crawler_data: Dict[str, Any],
+        industry: str,
+        company_name: str,
+        sources: List[Dict] = None
+    ) -> Dict[str, Any]:
         """
-        Analyze website data and calculate ROI using OpenAI GPT-4
+        Perform professional business analysis
         
         Args:
-            crawler_data: Data from WebsiteCrawler
-            industry: Business industry (hotel, restaurant, fitness, etc.)
-            company_name: Name of the company
+            crawler_data: Website crawl data
+            industry: Industry category
+            company_name: Company name
+            sources: Industry sources for context
             
         Returns:
-            dict: Analysis results with pain_points, roi_calculation, recommendations
+            Structured analysis result as dict
         """
-        
-        # Get relevant sources for this industry
-        sources = get_sources_for_industry(industry)
-        sources_text = format_sources_for_prompt(sources)
-        
-        # Build system prompt
-        system_prompt = self._build_system_prompt(industry, sources_text)
-        
-        # Build user prompt with crawler data
-        user_prompt = self._build_user_prompt(crawler_data, company_name, industry)
-        
-        # Define JSON Schema for Structured Outputs
-        response_schema = self._get_response_schema()
+        logger.info(f"Starting analysis for {company_name} in {industry} industry")
         
         try:
-            # Call OpenAI API with Structured Outputs
-            response = self.client.chat.completions.create(
+            # Build sources context
+            sources_context = self._format_sources(sources or [])
+            
+            # Build prompts
+            system_prompt = self._build_system_prompt(industry, sources_context)
+            user_prompt = self._build_user_prompt(crawler_data, company_name)
+            
+            # Call OpenAI with Structured Outputs
+            logger.info(f"Calling OpenAI {self.model} with structured output...")
+            
+            completion = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "website_analysis",
-                        "strict": True,
-                        "schema": response_schema
-                    }
-                },
-                temperature=0.7,
-                max_tokens=3000
+                response_format=AnalysisResult,
+                temperature=0.7
             )
             
-            # Parse response
-            analysis = json.loads(response.choices[0].message.content)
+            # Extract parsed result
+            analysis = completion.choices[0].message.parsed
+            
+            if not analysis:
+                raise ValueError("OpenAI returned no parsed result")
+            
+            # Convert to dict
+            result = analysis.model_dump()
             
             # Add metadata
-            analysis["model"] = self.model
-            analysis["industry"] = industry
-            analysis["company_name"] = company_name
+            result["model"] = self.model
+            result["industry"] = industry
+            result["company_name"] = company_name
             
-            return analysis
+            logger.info(f"Analysis completed successfully for {company_name}")
+            logger.info(f"Generated {len(result['pain_points'])} pain points and {len(result['recommendations'])} recommendations")
+            
+            return result
             
         except Exception as e:
-            print(f"OpenAI API Error: {e}")
-            # Fallback to basic analysis if OpenAI fails
-            return self._fallback_analysis(crawler_data, industry)
+            logger.error(f"Analysis failed: {e}")
+            logger.error(f"Crawler data: {crawler_data}")
+            raise
     
-    def _build_system_prompt(self, industry: str, sources_text: str) -> str:
-        """Build system prompt with industry context"""
+    def _format_sources(self, sources: List[Dict]) -> str:
+        """Format sources for prompt context"""
+        if not sources:
+            return "No specific industry sources available."
         
-        industry_contexts = {
-            "hotel": "Hotels & Pensionen mit 50-200+ Anfragen/Tag",
-            "restaurant": "Restaurants & Cafés mit hohem Reservierungsaufkommen",
-            "fitness": "Fitnessstudios & Wellness mit Mitgliederbetreuung",
-            "salon": "Friseursalons & Beauty mit Terminmanagement",
-            "immobilien": "Immobilienmakler mit Lead-Qualifizierung",
-            "ecommerce": "E-Commerce mit Customer Support",
-            "anwalt": "Rechtsanwälte mit Mandantenanfragen",
-            "steuerberater": "Steuerberater mit Beratungsanfragen",
-            "versicherung": "Versicherungsagenturen mit Kundenservice",
-            "arzt": "Arztpraxen mit Terminverwaltung"
+        formatted = "INDUSTRY RESEARCH SOURCES:\n\n"
+        for idx, source in enumerate(sources, 1):
+            formatted += f"{idx}. {source.get('title', 'Unknown')}\n"
+            formatted += f"   URL: {source.get('url', 'N/A')}\n"
+            formatted += f"   Key Insight: {source.get('description', 'N/A')}\n\n"
+        
+        formatted += "\nUse these sources to support your analysis with industry data.\n"
+        return formatted
+
+
+# Example usage for testing
+if __name__ == "__main__":
+    # Test the analyzer
+    analyzer = AIAnalyzer()
+    
+    test_crawler_data = {
+        "page_title": "Guest House Holland - Vacation Rentals in Juan Dolio",
+        "meta_description": "Luxury beachfront apartments in Dominican Republic",
+        "has_chatbot": True,
+        "chatbot_type": "Unknown",
+        "is_mobile_friendly": True
+    }
+    
+    test_sources = [
+        {
+            "title": "Vacation Rental Response Time Study",
+            "url": "https://example.com",
+            "description": "Response within 1 hour increases bookings by 25%"
         }
-        
-        context = industry_contexts.get(industry.lower(), "Dienstleistungsunternehmen")
-        
-        return f"""Du bist ein Senior Business Analyst für {context}.
-
-AUFGABE:
-Analysiere die Website-Daten und erstelle eine professionelle, quellenbasierte ROI-Analyse für einen KI-Chatbot (ChatPro AI).
-
-KONTEXT - CHATPRO AI:
-- Premium B2B SaaS AI-Chatbot
-- 95%+ Automatisierung
-- 24/7 Verfügbarkeit
-- 50+ Sprachen
-- PMS/CRM Integration
-- DSGVO-konform
-
-PRICING:
-- Business: €1.799 Setup + €249/Monat
-- Premium: €4.999 Setup + €799/Monat (empfohlen für Hotels!)
-- Enterprise: €10.000+ (große Ketten)
-
-SOURCES (verwende diese für ROI-Berechnungen):
-{sources_text}
-
-WICHTIG:
-1. Alle Zahlen MÜSSEN mit source_ids referenziert werden
-2. Sei KONSERVATIV in Schätzungen (Glaubwürdigkeit > Begeisterung)
-3. Pain Points müssen KONKRET zur Website passen (nutze crawler_data!)
-4. Empfehlungen müssen UMSETZBAR sein
-5. ROI-Berechnung muss TRANSPARENT sein (Formel + Quellen)
-
-CHATBOT PRIORITY LOGIC:
-- HIGH: Kein Chatbot + ROI > €5.000/Monat + Hotel/Restaurant/Fitness
-- MEDIUM: Legacy Chatbot (Zendesk/Tidio) ODER ROI €2.000-€5.000/Monat
-- LOW: Moderner Chatbot ODER ROI < €2.000/Monat
-
-OUTPUT: JSON gemäß Schema (siehe response_format)
-"""
+    ]
     
-    def _build_user_prompt(self, crawler_data: dict, company_name: str, industry: str) -> str:
-        """Build user prompt with website data"""
-        
-        chatbot_status = "Kein Chatbot erkannt"
-        if crawler_data.get("has_chatbot"):
-            chatbot_type = crawler_data.get("chatbot_type", "Unknown")
-            chatbot_status = f"Chatbot erkannt: {chatbot_type}"
-        
-        return f"""WEBSITE-ANALYSE FÜR: {company_name or 'Unbekannt'}
-Branche: {industry}
-
-CRAWLER-DATEN:
-- Website: {crawler_data.get('url', 'N/A')}
-- Seiten: {crawler_data.get('page_count', 0)}
-- Sprachen: {', '.join(crawler_data.get('languages', ['Deutsch']))}
-- Mobile: {'✓ Optimiert' if crawler_data.get('is_mobile_friendly') else '✗ Nicht optimiert'}
-- Chatbot: {chatbot_status}
-- Lead-Formulare: {len(crawler_data.get('lead_forms', []))}
-- Kontakt gefunden: {'Ja' if crawler_data.get('has_contact_info') else 'Nein'}
-
-AUFGABE:
-Erstelle eine detaillierte, quellenbasierte ROI-Analyse für ChatPro AI Chatbot.
-
-Analysiere:
-1. Pain Points (basierend auf den konkreten Website-Daten)
-2. ROI-Berechnung (mit Quellen-IDs!)
-3. Individuelle Empfehlungen (3-5 Stück, priorisiert)
-4. Chatbot Priority (HIGH/MEDIUM/LOW)
-
-Sei präzise, konservativ und transparent!
-"""
+    result = analyzer.analyze(
+        crawler_data=test_crawler_data,
+        industry="hotel",
+        company_name="Guest House Holland",
+        sources=test_sources
+    )
     
-    def _get_response_schema(self) -> dict:
-        """Get JSON Schema for Structured Outputs"""
-        return {
-            "type": "object",
-            "properties": {
-                "pain_points": {
-                    "type": "array",
-                    "description": "Konkrete Pain Points basierend auf Website-Analyse",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "problem": {
-                                "type": "string",
-                                "description": "Beschreibung des Problems"
-                            },
-                            "impact": {
-                                "type": "string",
-                                "description": "Auswirkung auf das Business"
-                            },
-                            "evidence": {
-                                "type": "string",
-                                "description": "Beweis aus Crawler-Daten"
-                            },
-                            "source_ids": {
-                                "type": "array",
-                                "description": "IDs der verwendeten Quellen",
-                                "items": {"type": "string"}
-                            }
-                        },
-                        "required": ["problem", "impact", "evidence", "source_ids"],
-                        "additionalProperties": False
-                    }
-                },
-                "roi_calculation": {
-                    "type": "object",
-                    "description": "ROI-Berechnung mit Quellen",
-                    "properties": {
-                        "monthly_roi": {
-                            "type": "number",
-                            "description": "Monatliches ROI-Potenzial in Euro"
-                        },
-                        "roi_multiplier": {
-                            "type": "number",
-                            "description": "ROI-Multiplikator (z.B. 16.5 = 16,5x Return)"
-                        },
-                        "break_even_months": {
-                            "type": "number",
-                            "description": "Break-Even in Monaten"
-                        },
-                        "calculations": {
-                            "type": "array",
-                            "description": "Einzelne Berechnungen",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "category": {
-                                        "type": "string",
-                                        "description": "Kategorie (z.B. 'Zeitersparnis', 'Direktbuchungen')"
-                                    },
-                                    "monthly_value": {
-                                        "type": "number",
-                                        "description": "Monatlicher Wert in Euro"
-                                    },
-                                    "calculation": {
-                                        "type": "string",
-                                        "description": "Formel/Erklärung der Berechnung"
-                                    },
-                                    "source_ids": {
-                                        "type": "array",
-                                        "description": "IDs der verwendeten Quellen",
-                                        "items": {"type": "string"}
-                                    }
-                                },
-                                "required": ["category", "monthly_value", "calculation", "source_ids"],
-                                "additionalProperties": False
-                            }
-                        }
-                    },
-                    "required": ["monthly_roi", "roi_multiplier", "break_even_months", "calculations"],
-                    "additionalProperties": False
-                },
-                "recommendations": {
-                    "type": "array",
-                    "description": "Individuelle Empfehlungen (3-5 Stück)",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "priority": {
-                                "type": "string",
-                                "enum": ["HIGH", "MEDIUM", "LOW"],
-                                "description": "Priorität der Empfehlung"
-                            },
-                            "title": {
-                                "type": "string",
-                                "description": "Titel der Empfehlung"
-                            },
-                            "description": {
-                                "type": "string",
-                                "description": "Detaillierte Beschreibung"
-                            },
-                            "impact": {
-                                "type": "string",
-                                "description": "Erwarteter Impact"
-                            },
-                            "implementation": {
-                                "type": "string",
-                                "description": "Wie umsetzen"
-                            }
-                        },
-                        "required": ["priority", "title", "description", "impact", "implementation"],
-                        "additionalProperties": False
-                    }
-                },
-                "chatbot_priority": {
-                    "type": "string",
-                    "enum": ["HIGH", "MEDIUM", "LOW"],
-                    "description": "Lead-Priorität für Sales-Team"
-                }
-            },
-            "required": ["pain_points", "roi_calculation", "recommendations", "chatbot_priority"],
-            "additionalProperties": False
-        }
-    
-    def _fallback_analysis(self, crawler_data: dict, industry: str) -> dict:
-        """Fallback analysis if OpenAI fails"""
-        return {
-            "pain_points": [
-                {
-                    "problem": "Manuelle Anfragenbearbeitung zeitintensiv",
-                    "impact": "Hoher Zeitaufwand für repetitive Aufgaben",
-                    "evidence": f"Website hat {crawler_data.get('page_count', 0)} Seiten",
-                    "source_ids": ["1", "3"]
-                }
-            ],
-            "roi_calculation": {
-                "monthly_roi": 3000,
-                "roi_multiplier": 3.8,
-                "break_even_months": 1.6,
-                "calculations": [
-                    {
-                        "category": "Zeitersparnis",
-                        "monthly_value": 1200,
-                        "calculation": "20h/Woche × €15/h × 4 Wochen",
-                        "source_ids": ["1"]
-                    },
-                    {
-                        "category": "Lead-Steigerung",
-                        "monthly_value": 1800,
-                        "calculation": "Geschätzt basierend auf Branchendurchschnitt",
-                        "source_ids": ["3"]
-                    }
-                ]
-            },
-            "recommendations": [
-                {
-                    "priority": "HIGH",
-                    "title": "KI-Chatbot implementieren",
-                    "description": "24/7 Automatisierung der Standardanfragen",
-                    "impact": "Zeitersparnis + mehr qualifizierte Leads",
-                    "implementation": "ChatPro AI Premium-Paket empfohlen"
-                }
-            ],
-            "chatbot_priority": "MEDIUM",
-            "model": "fallback",
-            "industry": industry
-        }
+    print(json.dumps(result, indent=2, ensure_ascii=False))
