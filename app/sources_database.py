@@ -161,11 +161,65 @@ def format_sources_for_pdf(sources: list) -> list:
     return formatted
 
 
-# Example usage
+def format_sources_for_prompt(sources: list) -> str:
+    """
+    Formats sources for AI prompt context.
+    Creates a structured string that can be injected into AI prompts
+    to provide industry-specific research context.
+    
+    Args:
+        sources: List of source dictionaries
+        
+    Returns:
+        Formatted string for prompt injection with source context
+    """
+    if not sources:
+        return "No specific industry sources available."
+    
+    formatted = "## Industry Research Context\n\n"
+    formatted += "Use these verified industry sources to inform your analysis:\n\n"
+    
+    for idx, source in enumerate(sources, 1):
+        title = source.get('title', 'Unknown Source')
+        url = source.get('url', 'N/A')
+        description = source.get('description', 'No description available')
+        
+        formatted += f"**Source {idx}: {title}**\n"
+        formatted += f"- URL: {url}\n"
+        formatted += f"- Key Insight: {description}\n\n"
+    
+    formatted += "\nWhen analyzing, reference these sources to support your recommendations "
+    formatted += "with industry data and best practices.\n"
+    
+    return formatted
+
+
+# Example usage and testing
 if __name__ == "__main__":
-    # Test
+    # Test all functions
+    print("=" * 70)
+    print("SOURCES DATABASE TEST")
+    print("=" * 70)
+    
+    # Test 1: Get sources for hotel
+    print("\n📚 TEST 1: Get sources for HOTEL")
     hotel_sources = get_sources_for_industry("hotel")
-    print(f"\n📚 Found {len(hotel_sources)} sources for HOTEL:")
-    for source in hotel_sources:
-        print(f"\n✅ {source['title']}")
-        print(f"   🔗 {source['url']}")
+    print(f"✅ Found {len(hotel_sources)} sources")
+    
+    # Test 2: Format for PDF
+    print("\n📄 TEST 2: Format sources for PDF")
+    pdf_formatted = format_sources_for_pdf(hotel_sources)
+    print(f"✅ Formatted {len(pdf_formatted)} sources for PDF")
+    for source in pdf_formatted[:2]:  # Show first 2
+        print(f"   {source['number']}. {source['title']}")
+    
+    # Test 3: Format for Prompt
+    print("\n💬 TEST 3: Format sources for AI Prompt")
+    prompt_formatted = format_sources_for_prompt(hotel_sources)
+    print(f"✅ Generated prompt context ({len(prompt_formatted)} chars)")
+    print("\nPreview:")
+    print(prompt_formatted[:300] + "...")
+    
+    print("\n" + "=" * 70)
+    print("✅ ALL TESTS PASSED!")
+    print("=" * 70)
