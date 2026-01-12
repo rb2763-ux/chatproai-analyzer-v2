@@ -1,6 +1,6 @@
 """
-CHATPRO AI ANALYZER - MAIN BACKEND APPLICATION (UPDATED)
-FastAPI backend with complete pipeline integration
+CHATPRO AI ANALYZER - MAIN BACKEND APPLICATION (FIXED ASYNC)
+FastAPI backend with proper async/sync handling for BackgroundTasks
 """
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -12,15 +12,20 @@ import os
 from datetime import datetime
 import uuid
 import asyncio
+import logging
 
 # Import pipeline
 from .pipeline import AnalysisPipeline
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI
 app = FastAPI(
     title="ChatPro AI Analyzer",
     description="Kostenlose Website-Analyse für Hotels, Fitness, Salons und mehr",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 # CORS Configuration
@@ -37,8 +42,8 @@ pipeline = AnalysisPipeline(output_dir="/mnt/user-data/outputs")
 
 # Request Models
 class AnalysisRequest(BaseModel):
-    website_url: str  # Changed from HttpUrl for flexibility
-    industry: Literal["hotel", "fitness", "salon", "immobilien", "restaurant", "other"]
+    website_url: str
+    industry: Literal["hotel", "fitness", "salon", "immobilien", "restaurant", "vacation_rental", "fahrschule", "other"]
     email: EmailStr
     company_name: Optional[str] = None
 
@@ -47,7 +52,7 @@ class AnalysisResponse(BaseModel):
     status: Literal["processing", "completed", "failed"]
     message: str
     report_url: Optional[str] = None
-    estimated_time: Optional[int] = None  # seconds
+    estimated_time: Optional[int] = None
     data: Optional[dict] = None
 
 # Status Storage (in-memory for now)
@@ -59,7 +64,7 @@ async def root():
     return {
         "status": "online",
         "service": "ChatPro AI Analyzer",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "timestamp": datetime.utcnow().isoformat(),
         "endpoints": {
             "analyze": "/api/analyze",
@@ -68,24 +73,47 @@ async def root():
         }
     }
 
-async def process_analysis_task(analysis_id: str, request: AnalysisRequest):
+@app.get("/health")
+async def health():
+    """Health check for Railway"""
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+def process_analysis_task_sync(analysis_id: str, request: AnalysisRequest):
     """
-    Background task to process analysis
+    SYNCHRONOUS wrapper for async pipeline
+    
+    This is required because FastAPI BackgroundTasks expects a sync function.
+    We create a new event loop to run the async pipeline.
     """
     
+    logger.info(f"[{analysis_id[:8]}] Background task started")
+    
+    # Create new event loop for this thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     try:
-        # Update status
+        # Update status to processing
         analysis_status[analysis_id]["status"] = "processing"
         analysis_status[analysis_id]["progress"] = 10
         
-        # Run pipeline
-        result = await pipeline.process(
-            website_url=request.website_url,
-            industry=request.industry,
-            email=request.email,
-            company_name=request.company_name
+        logger.info(f"[{analysis_id[:8]}] Running async pipeline...")
+        
+        # Run async pipeline in sync context
+        result = loop.run_until_complete(
+            pipeline.process(
+                website_url=request.website_url,
+                industry=request.industry,
+                email=request.email,
+                company_name=request.company_name,
+                analysis_id=analysis_id
+            )
         )
         
+        logger.info(f"[{analysis_id[:8]}] Pipeline completed with status: {result.get('status')}")
+        
+        # Update status based on result
         if result["status"] == "completed":
             analysis_status[analysis_id].update({
                 "status": "completed",
@@ -95,19 +123,27 @@ async def process_analysis_task(analysis_id: str, request: AnalysisRequest):
                 "data": result.get("analysis_data", {}),
                 "completed_at": datetime.utcnow().isoformat()
             })
+            logger.info(f"[{analysis_id[:8]}] ✅ Analysis completed successfully")
         else:
             analysis_status[analysis_id].update({
                 "status": "failed",
                 "error": result.get("error", "Unknown error"),
                 "failed_at": datetime.utcnow().isoformat()
             })
+            logger.error(f"[{analysis_id[:8]}] ❌ Analysis failed: {result.get('error')}")
             
     except Exception as e:
+        logger.error(f"[{analysis_id[:8]}] ❌ Background task exception: {str(e)}")
         analysis_status[analysis_id].update({
             "status": "failed",
             "error": str(e),
             "failed_at": datetime.utcnow().isoformat()
         })
+    finally:
+        # Always close the loop
+        loop.close()
+        logger.info(f"[{analysis_id[:8]}] Background task finished")
+
 
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_website(
@@ -117,17 +153,25 @@ async def analyze_website(
     """
     Start website analysis
     
+    Returns immediately with 202 status and analysis_id.
+    Actual processing happens in background.
+    
     Process:
-    1. Validate URL
-    2. Crawl website
-    3. Analyze with AI
-    4. Generate PDF
-    5. Send email (TODO)
-    6. Save to Brevo CRM (TODO)
+    1. Generate analysis_id
+    2. Initialize status
+    3. Start background task
+    4. Return 202 with analysis_id
+    5. Client polls /api/status/{analysis_id}
+    6. When complete, client downloads /api/report/{analysis_id}
     """
     
     # Generate unique analysis ID
     analysis_id = str(uuid.uuid4())
+    
+    logger.info(f"[{analysis_id[:8]}] New analysis request received")
+    logger.info(f"[{analysis_id[:8]}]   URL: {request.website_url}")
+    logger.info(f"[{analysis_id[:8]}]   Industry: {request.industry}")
+    logger.info(f"[{analysis_id[:8]}]   Email: {request.email}")
     
     # Initialize status
     analysis_status[analysis_id] = {
@@ -140,12 +184,14 @@ async def analyze_website(
         "progress": 0
     }
     
-    # Add background task
+    # Add SYNC background task
     background_tasks.add_task(
-        process_analysis_task,
+        process_analysis_task_sync,  # ← SYNC function!
         analysis_id,
         request
     )
+    
+    logger.info(f"[{analysis_id[:8]}] Background task scheduled")
     
     return AnalysisResponse(
         analysis_id=analysis_id,
@@ -154,10 +200,14 @@ async def analyze_website(
         estimated_time=60
     )
 
+
 @app.get("/api/status/{analysis_id}", response_model=AnalysisResponse)
 async def get_analysis_status(analysis_id: str):
     """
     Check analysis status
+    
+    Client should poll this endpoint every 2-5 seconds
+    until status is 'completed' or 'failed'.
     """
     
     if analysis_id not in analysis_status:
@@ -184,10 +234,13 @@ async def get_analysis_status(analysis_id: str):
         data=status.get("data")
     )
 
+
 @app.get("/api/report/{analysis_id}")
 async def get_report(analysis_id: str):
     """
-    Download PDF/HTML report
+    Download PDF report
+    
+    Returns FileResponse with PDF attachment.
     """
     
     if analysis_id not in analysis_status:
@@ -220,11 +273,14 @@ async def get_report(analysis_id: str):
         media_type = "text/html"
         filename = f"chatpro-ai-analyse-{analysis_id[:8]}.html"
     
+    logger.info(f"[{analysis_id[:8]}] Serving report: {filename}")
+    
     return FileResponse(
         report_path,
         media_type=media_type,
         filename=filename
     )
+
 
 @app.get("/api/stats")
 async def get_stats():
@@ -249,13 +305,16 @@ async def get_stats():
         "processing": processing,
         "failed": failed,
         "success_rate": round(completed / total * 100, 1) if total > 0 else 0,
-        "industries": industries
+        "industries": industries,
+        "timestamp": datetime.utcnow().isoformat()
     }
+
 
 # Error Handlers
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Global error handler"""
+    logger.error(f"Global exception: {str(exc)}")
     return JSONResponse(
         status_code=500,
         content={
@@ -264,6 +323,7 @@ async def global_exception_handler(request, exc):
             "timestamp": datetime.utcnow().isoformat()
         }
     )
+
 
 if __name__ == "__main__":
     import uvicorn
