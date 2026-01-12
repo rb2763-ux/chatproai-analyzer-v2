@@ -203,7 +203,7 @@ Remember:
             # Call OpenAI with Structured Outputs
             logger.info(f"Calling OpenAI {self.model} with structured output...")
             
-            completion = self.client.beta.chat.completions.parse(
+            completion = self.client.chat.completions.parse(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
