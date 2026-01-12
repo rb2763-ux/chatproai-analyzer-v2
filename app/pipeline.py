@@ -13,6 +13,7 @@ from .crawler import WebsiteCrawler
 from .analyzer import AIAnalyzer
 from .pdf_generator import PDFReportGenerator
 from .brevo_crm import BrevoCRM
+from .sources_database import get_sources_for_industry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -64,7 +65,7 @@ class AnalysisPipeline:
         
         try:
             # STEP 1: Crawl website
-            logger.info(f"[{analysis_id[:8]}] Step 1/4: Crawling {website_url}...")
+            logger.info(f"[{analysis_id[:8]}] Step 1/5: Crawling {website_url}...")
             crawler_data = await self.crawler.crawl(website_url)
             
             # Defensive check
@@ -75,7 +76,7 @@ class AnalysisPipeline:
             logger.info(f"[{analysis_id[:8]}] Crawl complete. Has chatbot: {crawler_data.get('has_chatbot', False)}")
             
             # STEP 2: AI Analysis
-            logger.info(f"[{analysis_id[:8]}] Step 2/4: Running AI analysis...")
+            logger.info(f"[{analysis_id[:8]}] Step 2/5: Running AI analysis...")
             analysis_result = self.analyzer.analyze(
                 crawler_data=crawler_data,
                 industry=industry,
@@ -89,9 +90,18 @@ class AnalysisPipeline:
             
             logger.info(f"[{analysis_id[:8]}] Analysis complete")
             
-            # STEP 3: Generate PDF Report
+            # STEP 3: Get industry sources
+            logger.info(f"[{analysis_id[:8]}] Step 3/5: Loading industry sources...")
+            try:
+                sources = get_sources_for_industry(industry)
+                logger.info(f"[{analysis_id[:8]}] Loaded {len(sources)} sources for industry: {industry}")
+            except Exception as e:
+                logger.error(f"[{analysis_id[:8]}] Failed to load sources: {e}")
+                sources = []
+            
+            # STEP 4: Generate PDF Report
             pdf_start = datetime.now()
-            logger.info(f"[{analysis_id[:8]}] Step 3/4: Generating PDF report...")
+            logger.info(f"[{analysis_id[:8]}] Step 4/5: Generating PDF report...")
             
             pdf_path = os.path.join(self.output_dir, f"report_{analysis_id}.pdf")
             
@@ -101,7 +111,8 @@ class AnalysisPipeline:
                     analysis_data=analysis_result,
                     company_name=company_name,
                     industry=industry,
-                    output_path=pdf_path
+                    output_path=pdf_path,
+                    sources=sources
                 )
                 
                 pdf_duration = (datetime.now() - pdf_start).total_seconds()
@@ -112,9 +123,9 @@ class AnalysisPipeline:
                 logger.error(traceback.format_exc())
                 report_path = None
             
-            # STEP 4: Save to Brevo CRM
+            # STEP 5: Save to Brevo CRM
             crm_start = datetime.now()
-            logger.info(f"[{analysis_id[:8]}] Step 4/4: Saving to Brevo CRM...")
+            logger.info(f"[{analysis_id[:8]}] Step 5/5: Saving to Brevo CRM...")
             
             try:
                 # Extract ROI data
