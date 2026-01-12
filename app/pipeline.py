@@ -128,7 +128,7 @@ class AnalysisPipeline:
                 if not isinstance(chatbot_priority, str):
                     chatbot_priority = "medium"
                 
-                crm_response = await self.brevo_crm.save_lead(
+                crm_response = self.brevo_crm.save_lead(
                     email=email,
                     company_name=company_name,
                     website_url=website_url,
