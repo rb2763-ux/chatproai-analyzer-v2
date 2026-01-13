@@ -1,6 +1,7 @@
 """
 ChatPro AI - Business Analyzer
-PRODUCTION-READY VERSION with structured outputs and professional analysis
+PRODUCTION-READY VERSION 2.0 with realistic ROI calculations
+Based on 4 real ROI studies (Vynta AI, AirDNA, Go-Globe, Chatarmin, Technova)
 """
 import os
 import json
@@ -45,7 +46,8 @@ class ROICalculation(BaseModel):
     break_even_months: int = Field(description="Break-even period in months")
     formula_explanation: str = Field(description="Explanation of how ROI was calculated")
     assumptions: List[str] = Field(description="List of assumptions used in calculation")
-    
+    sources_used: List[int] = Field(description="List of source IDs used in calculation")
+
 
 class AnalysisResult(BaseModel):
     """Complete structured analysis output"""
@@ -69,6 +71,7 @@ class AnalysisResult(BaseModel):
 class AIAnalyzer:
     """
     Professional Business Analyzer using OpenAI GPT-4 with Structured Outputs
+    Version 2.0 - Production-Ready with Realistic ROI
     """
     
     def __init__(self):
@@ -79,95 +82,297 @@ class AIAnalyzer:
         
         self.client = OpenAI(api_key=api_key)
         self.model = "gpt-4o-2024-08-06"  # Supports Structured Outputs
-        logger.info(f"AIAnalyzer initialized with model: {self.model}")
+        logger.info(f"AIAnalyzer V2.0 initialized with model: {self.model}")
     
     def _build_system_prompt(self, industry: str, sources_context: str) -> str:
-        """Build comprehensive system prompt"""
-        return f"""You are a Senior Business Analyst specializing in the {industry} industry.
+        """Build comprehensive system prompt with realistic ROI guidelines"""
+        
+        # Industry-specific contexts with realistic ROI benchmarks
+        industry_contexts = {
+            "hotel": """
+## HOTEL & GASTGEWERBE - ROI BENCHMARKS
 
-YOUR ROLE:
-You conduct professional business analyses for companies, providing data-driven insights and actionable recommendations.
+**Typische Geschäftsgröße**:
+- Klein: 10-30 Zimmer, 2-5 Mitarbeiter
+- Mittel: 30-80 Zimmer, 10-25 Mitarbeiter
+- Groß: 80+ Zimmer, 30+ Mitarbeiter
 
-YOUR TASK:
-Analyze the provided website data and create a comprehensive business analysis report.
+**Realistische ROI-Benchmarks** (Vynta AI Study 2026):
+- Direct Bookings: +20-30% (nicht +50%!)
+- Upselling Conversion: 15-25%
+- Staff Time Saved: 15-25h/Woche (bei 50+ Zimmer)
+- Response Time: 4-8h → <2min
+- CSAT Improvement: +10-15%
 
-CRITICAL REQUIREMENTS:
+**Konservative ROI-Formel**:
+Klein (10-30 Zimmer): €500-900/Monat
+Mittel (30-80 Zimmer): €1.200-2.500/Monat
+Groß (80+ Zimmer): €2.500-5.000/Monat
+""",
+            "vacation_rental": """
+## FERIENWOHNUNGEN - ROI BENCHMARKS
 
-1. ROI CALCULATION MUST BE REALISTIC:
-   - Base calculations on actual website traffic data
-   - Use industry benchmarks from the provided sources
-   - Show your calculation formula
-   - List all assumptions clearly
-   - Example formula: (Expected Annual Revenue Increase - Annual Costs) / Annual Costs × 100
+**Typische Geschäftsgröße**:
+- Klein: 1-5 Einheiten, Einzelunternehmer
+- Mittel: 5-20 Einheiten, 2-8 Mitarbeiter
+- Groß: 20+ Einheiten, Verwaltungsgesellschaft
 
-2. PAIN POINTS MUST BE BUSINESS-FOCUSED:
-   - NOT technical jargon like "Mobile: 7 Nicht optimiert"
-   - YES business language like "Mobile visitors have 40% higher bounce rate, losing ~€X monthly"
-   - Categorize: Technology, Customer Experience, Marketing, Operations, Revenue
-   - Prioritize by business impact
-   - Provide concrete evidence from website data
+**Realistische ROI-Benchmarks** (AirDNA Study):
+- Dynamic Pricing Impact: +10-15% (nicht +40%!)
+- Direct Booking vs OTA: Spart 15% Provision
+- Staff Time Saved: 10-20h/Woche (bei 10+ Einheiten)
+- Professional Hosts vs Casual: 2-3x mehr Umsatz
 
-3. RECOMMENDATIONS MUST BE ACTIONABLE:
-   - NOT vague like "Improve website"
-   - YES specific like "Implement AI chatbot to handle 80% of FAQ inquiries, saving 25h/week staff time"
-   - Include implementation effort estimate
-   - Show expected business value
-   - Mark quick wins (< 1 month)
+**Konservative ROI-Formel**:
+Klein (1-5 Einheiten): €200-600/Monat (nur bei >3 Einheiten profitabel)
+Mittel (5-20 Einheiten): €800-1.500/Monat
+Groß (20+ Einheiten): €2.000-4.000/Monat
+""",
+            "restaurant": """
+## RESTAURANTS & CAFÉS - ROI BENCHMARKS
 
-4. USE INDUSTRY DATA:
+**Typische Geschäftsgröße**:
+- Klein: 20-50 Plätze, 3-8 Mitarbeiter
+- Mittel: 50-120 Plätze, 10-25 Mitarbeiter
+- Groß: 120+ Plätze, Kette, 30+ Mitarbeiter
+
+**Realistische ROI-Benchmarks**:
+- Reservierungs-Automatisierung: 60-80% ohne Personal
+- No-Show-Reduktion: -30% durch Reminder
+- Telefon-Volumen: -50%
+- Staff Time Saved: 10-20h/Woche
+
+**Konservative ROI-Formel**:
+Klein (20-50 Plätze): €400-800/Monat
+Mittel (50-120 Plätze): €1.200-2.200/Monat
+Groß (120+ Plätze): €2.500-5.000/Monat
+""",
+            "fitness": """
+## FITNESS & WELLNESS - ROI BENCHMARKS
+
+**Typische Geschäftsgröße**:
+- Klein: 1 Studio, 100-300 Mitglieder, 2-5 Trainer
+- Mittel: 2-5 Standorte, 500-1.500 Mitglieder
+- Groß: 5+ Standorte, 2.000+ Mitglieder
+
+**Realistische ROI-Benchmarks**:
+- Lead Conversion: +10-20% (nicht +50%!)
+- Churn Reduction: -5-10%
+- Terminbuchungen: 70% automatisiert
+- Staff Time Saved: 15-30h/Woche
+
+**Konservative ROI-Formel**:
+Klein (100-300 Mitglieder): €600-1.200/Monat
+Mittel (500-1.500 Mitglieder): €1.500-3.000/Monat
+Groß (2.000+ Mitglieder): €3.000-6.000/Monat
+""",
+            "salon": """
+## SALONS & BEAUTY - ROI BENCHMARKS
+
+**Typische Geschäftsgröße**:
+- Klein: 1-2 Stühle, Einzelunternehmer
+- Mittel: 3-8 Stühle, 3-10 Mitarbeiter
+- Groß: 10+ Stühle, Kette, 15+ Mitarbeiter
+
+**Realistische ROI-Benchmarks**:
+- Terminbuchungen: 80% automatisiert
+- No-Show-Reduktion: -40% durch Reminder
+- Upselling: +15-25% (Produkte, Add-ons)
+- Staff Time Saved: 8-15h/Woche
+
+**Konservative ROI-Formel**:
+Klein (1-2 Stühle): €200-400/Monat (grenzwertig profitabel)
+Mittel (3-8 Stühle): €700-1.300/Monat
+Groß (10+ Stühle): €1.500-3.000/Monat
+""",
+            "fahrschule": """
+## FAHRSCHULEN - ROI BENCHMARKS
+
+**Typische Geschäftsgröße**:
+- Klein: 1-2 Fahrlehrer, 20-50 Schüler
+- Mittel: 3-8 Fahrlehrer, 80-200 Schüler
+- Groß: 10+ Fahrlehrer, 300+ Schüler
+
+**Realistische ROI-Benchmarks**:
+- Lead Conversion: +15-25%
+- Terminbuchungen: 90% automatisiert
+- Theorie-Fragen: 24/7 Support
+- Staff Time Saved: 10-20h/Woche
+
+**Konservative ROI-Formel**:
+Klein (20-50 Schüler): €800-1.500/Monat
+Mittel (80-200 Schüler): €1.800-3.500/Monat
+Groß (300+ Schüler): €4.000-8.000/Monat
+""",
+            "immobilien": """
+## IMMOBILIENMAKLER - ROI BENCHMARKS
+
+**Typische Geschäftsgröße**:
+- Klein: 1-2 Makler, 10-30 Objekte
+- Mittel: 3-10 Makler, 50-150 Objekte
+- Groß: 15+ Makler, 200+ Objekte
+
+**Realistische ROI-Benchmarks**:
+- Lead Qualification: 70% automatisiert
+- Besichtigungsbuchungen: +30%
+- Response Time: 24h → <5min
+- Staff Time Saved: 15-30h/Woche
+
+**Konservative ROI-Formel**:
+Klein (10-30 Objekte): €800-1.500/Monat
+Mittel (50-150 Objekte): €2.000-4.000/Monat
+Groß (200+ Objekte): €5.000-10.000/Monat
+"""
+        }
+        
+        # Get industry-specific context
+        industry_context = industry_contexts.get(industry, industry_contexts.get("hotel", ""))
+        
+        # Build complete prompt
+        prompt = f"""Du bist ein **Senior Business Analyst** mit 15+ Jahren Erfahrung in der digitalen Transformation und ROI-Bewertung von AI-Automatisierungslösungen. Du analysierst Unternehmenswebsites, um **realistische, konservative und glaubwürdige** Business Intelligence Reports zu erstellen.
+
+## KONTEXT: CHATPRO AI
+
+**Produkt**: Premium B2B SaaS AI-Chatbot für Kundenservice-Automatisierung
+**Kernversprechen**: 
+- 95%+ Automatisierung von Routine-Anfragen
+- 24/7 Verfügbarkeit in 50+ Sprachen
+- Nahtlose Integration in PMS/CRM/ERP-Systeme
+- DSGVO-konform & sicher
+
+**Pricing** (2026):
+- **Business**: €1.799 Setup + €249/Monat
+- **Premium**: €4.999 Setup + €799/Monat  
+- **Enterprise**: €10.000+ Setup + Custom Pricing
+
+{industry_context}
+
+## KRITISCHE ROI-VALIDIERUNGSREGELN
+
+### 1. MAXIMALER ROI-CHECK
+Monatlicher ROI DARF NICHT > 10x ChatPro AI Kosten sein
+
+**Beispiel**:
+- AI-Kosten: €249/Monat → Max €2.490/Monat
+- Wenn berechnet: €6.000/Monat → **REDUZIERE AUF €2.000-2.500!**
+
+### 2. BREAK-EVEN ZEITRAUM
+Break-Even MUSS zwischen 3-12 Monaten liegen
+
+### 3. BUSINESS-GRÖSSEN-CHECK
+- Website < 5 Seiten: Max €500/Monat ROI (SEHR KLEIN)
+- Website < 15 Seiten: Max €1.200/Monat ROI (KLEIN)
+- Website < 40 Seiten: Max €3.000/Monat ROI (MITTEL)
+- Website 40+ Seiten: Max €8.000/Monat ROI (GROSS)
+
+### 4. KONSERVATIVE ANNAHMEN
+**IMMER verwenden**:
+- Conversion Uplift: +5-10% (NICHT +20-50%!)
+- Direct Booking Increase: +5-8% (NICHT +30%!)
+- Lead Qualification: +10-15% (NICHT +50%!)
+- Staff Time Saved: 10-25h/Woche (NICHT 40h!)
+
+### 5. ROI TRANSPARENZ
+**Wenn ROI > €2.000/Monat**: Erkläre detailliert wie berechnet, welche Annahmen, welche Risiken.
+
+## BRANCHEN-SPEZIFISCHE QUELLEN
+
 {sources_context}
 
-5. LANGUAGE:
-   - Write in clear, professional German
-   - Avoid technical jargon
-   - Focus on business value
-   - Be specific with numbers
+Verwende diese Quellen, um deine Analysen zu untermauern. Referenziere mindestens 3-5 Quellen in der ROI-Berechnung.
 
-ANALYSIS METHODOLOGY:
-1. Analyze website performance (mobile, speed, chatbot presence)
-2. Estimate current inquiry volume and conversion rates
-3. Calculate potential improvements based on industry benchmarks
-4. Prioritize recommendations by ROI
-5. Provide realistic implementation roadmap
+## FINALE CHECKLISTE
 
-OUTPUT:
-Return a complete AnalysisResult object with all fields filled professionally."""
+Bevor du die Analyse ausgibst, prüfe:
+
+✅ **Sprache**: 100% Deutsch (keine englischen Phrasen!)
+✅ **ROI Realismus**: Monatlicher ROI < 10x AI-Kosten
+✅ **Business-Größe**: ROI passt zur Unternehmensgröße
+✅ **Quellen**: Mindestens 3-5 Quellen-IDs referenziert
+✅ **Transparenz**: ROI-Formel klar erklärt
+✅ **Konservativ**: Annahmen sind vorsichtig (5-10%, nicht 30-50%!)
+✅ **Break-Even**: 3-12 Monate (nicht <2 oder >18!)
+✅ **Evidence**: Pain Points basieren auf crawler_data
+✅ **Actionable**: Recommendations sind umsetzbar
+
+## WICHTIG: EHRLICHKEIT > VERKAUF
+
+**Unser Ziel**: Glaubwürdige Analysen, die echten Mehrwert bieten.
+**NICHT unser Ziel**: Unrealistische Zahlen, um Verkäufe zu forcieren.
+
+**Wenn ein Business ZU KLEIN ist** (z.B. 1-2 Zimmer Pension):
+"Bei dieser Geschäftsgröße ist der ROI marginal. ChatPro AI lohnt sich ab ~10 Zimmer bzw. €5.000+ monatlichem Umsatz."
+
+**Das ist PROFESSIONELL und baut VERTRAUEN auf!** 💪
+
+Antworte immer auf Deutsch und im JSON-Format gemäß dem AnalysisResult Schema.
+"""
+        
+        return prompt
 
     def _build_user_prompt(self, crawler_data: Dict, company_name: str) -> str:
         """Build user prompt with website data"""
         
         # Extract key data points
+        url = crawler_data.get("url", "N/A")
+        page_count = crawler_data.get("page_count", 0)
+        languages = crawler_data.get("languages", [])
         has_chatbot = crawler_data.get("has_chatbot", False)
         chatbot_type = crawler_data.get("chatbot_type", "None")
         is_mobile_friendly = crawler_data.get("is_mobile_friendly", False)
-        meta_description = crawler_data.get("meta_description", "")
-        page_title = crawler_data.get("page_title", "")
+        has_contact_info = crawler_data.get("has_contact_info", False)
+        lead_forms = crawler_data.get("lead_forms", [])
         
         # Build prompt
-        prompt = f"""COMPANY TO ANALYZE: {company_name}
+        prompt = f"""UNTERNEHMEN ZU ANALYSIEREN: {company_name}
 
-WEBSITE DATA:
-- Page Title: {page_title}
-- Meta Description: {meta_description}
-- Has Chatbot: {has_chatbot}
-- Chatbot Type: {chatbot_type}
-- Mobile Friendly: {is_mobile_friendly}
+WEBSITE-DATEN:
+- URL: {url}
+- Seitenanzahl: {page_count}
+- Sprachen: {', '.join(languages) if languages else 'Deutsch (angenommen)'}
+- Mobile-freundlich: {'Ja' if is_mobile_friendly else 'Nein'}
+- Hat Chatbot: {'Ja' if has_chatbot else 'Nein'}
+- Chatbot-Typ: {chatbot_type}
+- Lead-Formulare: {len(lead_forms)} gefunden
+- Kontakt-Info: {'Vorhanden' if has_contact_info else 'Nicht gefunden'}
 
-TASK:
-Create a comprehensive business analysis for {company_name}.
+GESCHÄFTSGRÖSSEN-INDIKATOR:
+- {page_count} Seiten → {'SEHR KLEIN' if page_count < 5 else 'KLEIN' if page_count < 15 else 'MITTEL' if page_count < 40 else 'GROSS'}
+- Max realistischer ROI: {'€500/Monat' if page_count < 5 else '€1.200/Monat' if page_count < 15 else '€3.000/Monat' if page_count < 40 else '€8.000/Monat'}
 
-FOCUS AREAS:
-1. Current digital presence assessment
-2. Customer experience analysis
-3. Automation potential (especially chatbot)
-4. Revenue optimization opportunities
-5. Competitive positioning
+AUFGABE:
+Erstelle eine umfassende Geschäftsanalyse für {company_name} mit:
 
-Remember:
-- Be realistic with numbers
-- Base ROI on industry data
-- Provide actionable insights
-- Show clear business value"""
+1. PAIN POINTS (3-7 Stück):
+   - Fokus auf geschäftliche Auswirkungen (nicht technische Details)
+   - Beispiel: "Keine 24/7 Verfügbarkeit führt zu geschätzten 15-25% verlorenen Buchungen"
+   - NICHT: "Kein Chatbot vorhanden"
+
+2. RECOMMENDATIONS (3-7 Stück):
+   - Konkret und umsetzbar
+   - Mit Implementierungsaufwand
+   - Geschäftlicher Wert klar kommuniziert
+
+3. ROI-BERECHNUNG:
+   - Basierend auf Geschäftsgröße ({page_count} Seiten)
+   - Konservative Annahmen (5-10% Uplift)
+   - Break-Even 3-12 Monate
+   - Formel transparent erklären
+   - Mindestens 3-5 Quellen referenzieren
+
+FOKUS-BEREICHE:
+1. Aktuelle digitale Präsenz
+2. Kundenerfahrung
+3. Automatisierungspotenzial (besonders Chatbot)
+4. Umsatzoptimierung
+5. Wettbewerbspositionierung
+
+KRITISCH:
+- Sei realistisch mit Zahlen
+- Basiere ROI auf Branchendaten
+- Liefere umsetzbare Einblicke
+- Zeige klaren Geschäftswert
+- 100% Deutsch"""
 
         return prompt
 
@@ -190,7 +395,7 @@ Remember:
         Returns:
             Structured analysis result as dict
         """
-        logger.info(f"Starting analysis for {company_name} in {industry} industry")
+        logger.info(f"Starting V2.0 analysis for {company_name} in {industry} industry")
         
         try:
             # Build sources context
@@ -200,8 +405,12 @@ Remember:
             system_prompt = self._build_system_prompt(industry, sources_context)
             user_prompt = self._build_user_prompt(crawler_data, company_name)
             
+            # Log prompt length for debugging
+            logger.info(f"System prompt length: {len(system_prompt)} chars")
+            logger.info(f"User prompt length: {len(user_prompt)} chars")
+            
             # Call OpenAI with Structured Outputs
-            logger.info(f"Calling OpenAI {self.model} with structured output...")
+            logger.info(f"Calling OpenAI {self.model} with structured output (V2.0 prompt)...")
             
             completion = self.client.chat.completions.parse(
                 model=self.model,
@@ -210,7 +419,7 @@ Remember:
                     {"role": "user", "content": user_prompt}
                 ],
                 response_format=AnalysisResult,
-                temperature=0.7
+                temperature=0.5  # Lower for more conservative/consistent results
             )
             
             # Extract parsed result
@@ -226,9 +435,11 @@ Remember:
             result["model"] = self.model
             result["industry"] = industry
             result["company_name"] = company_name
+            result["analyzer_version"] = "2.0"
             
-            logger.info(f"Analysis completed successfully for {company_name}")
+            logger.info(f"✅ Analysis V2.0 completed for {company_name}")
             logger.info(f"Generated {len(result['pain_points'])} pain points and {len(result['recommendations'])} recommendations")
+            logger.info(f"ROI: €{result['roi_calculation']['monthly_roi_euro']}/month, Break-even: {result['roi_calculation']['break_even_months']} months")
             
             return result
             
@@ -240,15 +451,16 @@ Remember:
     def _format_sources(self, sources: List[Dict]) -> str:
         """Format sources for prompt context"""
         if not sources:
-            return "No specific industry sources available."
+            return "Keine spezifischen Branchenquellen verfügbar."
         
-        formatted = "INDUSTRY RESEARCH SOURCES:\n\n"
+        formatted = "BRANCHEN-SPEZIFISCHE QUELLEN:\n\n"
         for idx, source in enumerate(sources, 1):
-            formatted += f"{idx}. {source.get('title', 'Unknown')}\n"
-            formatted += f"   URL: {source.get('url', 'N/A')}\n"
-            formatted += f"   Key Insight: {source.get('description', 'N/A')}\n\n"
+            formatted += f"[{idx}] {source.get('title', 'Unbekannt')}\n"
+            formatted += f"    URL: {source.get('url', 'N/A')}\n"
+            formatted += f"    Key Insight: {source.get('description', 'N/A')}\n\n"
         
-        formatted += "\nUse these sources to support your analysis with industry data.\n"
+        formatted += "\nVerwende diese Quellen zur Untermauerung deiner Analyse mit Branchendaten.\n"
+        formatted += "Referenziere Quellen mit [1], [2], etc. in deiner ROI-Berechnung.\n"
         return formatted
 
 
@@ -258,24 +470,32 @@ if __name__ == "__main__":
     analyzer = AIAnalyzer()
     
     test_crawler_data = {
-        "page_title": "Guest House Holland - Vacation Rentals in Juan Dolio",
-        "meta_description": "Luxury beachfront apartments in Dominican Republic",
+        "url": "https://guesthouseholland.com",
+        "page_count": 12,
+        "languages": ["en", "nl"],
         "has_chatbot": True,
         "chatbot_type": "Unknown",
-        "is_mobile_friendly": True
+        "is_mobile_friendly": True,
+        "has_contact_info": True,
+        "lead_forms": ["contact", "booking"]
     }
     
     test_sources = [
         {
-            "title": "Vacation Rental Response Time Study",
-            "url": "https://example.com",
-            "description": "Response within 1 hour increases bookings by 25%"
+            "title": "Vynta AI Hotel Study 2026",
+            "url": "https://vynta.ai/blog/hotel-chatbot/",
+            "description": "Direct bookings +20-30%, Upselling 15-25%, Staff time saved 15-25h/week"
+        },
+        {
+            "title": "AirDNA Vacation Rental Study",
+            "url": "https://www.airdna.co/",
+            "description": "Dynamic pricing +10-15%, Professional hosts 2-3x more revenue"
         }
     ]
     
     result = analyzer.analyze(
         crawler_data=test_crawler_data,
-        industry="hotel",
+        industry="vacation_rental",
         company_name="Guest House Holland",
         sources=test_sources
     )
