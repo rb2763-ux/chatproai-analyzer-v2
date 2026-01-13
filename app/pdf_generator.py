@@ -53,10 +53,10 @@ BACKGROUND_LIGHT = colors.HexColor('#f9fafb')    # Very light background
 
 # Page layout constants
 PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN_LEFT = 2.5 * cm
-MARGIN_RIGHT = 2.5 * cm
-MARGIN_TOP = 2 * cm
-MARGIN_BOTTOM = 2 * cm
+MARGIN_LEFT = 2 * cm
+MARGIN_RIGHT = 2 * cm
+MARGIN_TOP = 1.5 * cm
+MARGIN_BOTTOM = 1.5 * cm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
 
 
@@ -184,31 +184,31 @@ class PDFReportGenerator:
                 'CustomHeading1',
                 parent=base_styles['Heading1'],
                 fontName='Helvetica-Bold',
-                fontSize=20,
+                fontSize=16,
                 textColor=GRAY_DARK,
-                spaceAfter=16,
-                spaceBefore=24,
-                leading=24
+                spaceAfter=12,
+                spaceBefore=16,
+                leading=20
             ),
             'Heading2': ParagraphStyle(
                 'CustomHeading2',
                 parent=base_styles['Heading2'],
                 fontName='Helvetica-Bold',
-                fontSize=16,
+                fontSize=12,
                 textColor=GRAY_DARK,
-                spaceAfter=12,
-                spaceBefore=18,
-                leading=20
+                spaceAfter=8,
+                spaceBefore=12,
+                leading=16
             ),
             'Heading3': ParagraphStyle(
                 'CustomHeading3',
                 parent=base_styles['Heading3'],
                 fontName='Helvetica-Bold',
-                fontSize=14,
+                fontSize=12,
                 textColor=PRIMARY_COLOR,
-                spaceAfter=10,
-                spaceBefore=14,
-                leading=17
+                spaceAfter=6,
+                spaceBefore=10,
+                leading=15
             ),
             
             # Body text styles
@@ -216,22 +216,22 @@ class PDFReportGenerator:
                 'CustomBodyText',
                 parent=base_styles['Normal'],
                 fontName='Helvetica',
-                fontSize=11,
+                fontSize=10,
                 textColor=GRAY_DARK,
-                spaceAfter=10,
+                spaceAfter=8,
                 alignment=TA_JUSTIFY,
-                leading=16
+                leading=14
             ),
             'BodyTextIndent': ParagraphStyle(
                 'BodyTextIndent',
                 parent=base_styles['Normal'],
                 fontName='Helvetica',
-                fontSize=11,
+                fontSize=10,
                 textColor=GRAY_DARK,
-                spaceAfter=8,
+                spaceAfter=6,
                 leftIndent=20,
                 alignment=TA_JUSTIFY,
-                leading=16
+                leading=14
             ),
             
             # Special styles
@@ -344,7 +344,7 @@ class PDFReportGenerator:
             
             # 4. Company Overview
             story.extend(self._create_company_overview(company_name, industry, crawler_data))
-            story.append(Spacer(1, 0.5*cm))
+            story.append(Spacer(1, 0.3*cm))
             
             # 5. ROI Analysis
             story.extend(self._create_roi_analysis(analysis_data))
@@ -392,11 +392,11 @@ class PDFReportGenerator:
         
         # Subtitle
         elements.append(Paragraph(
-            "Business Intelligence Report",
+            "Geschäftsanalyse-Bericht",
             self.styles['CoverSubtitle']
         ))
         
-        elements.append(Spacer(1, 2*cm))
+        elements.append(Spacer(1, 1*cm))
         
         # Company name
         elements.append(Paragraph(
@@ -436,15 +436,15 @@ class PDFReportGenerator:
             self.styles['CoverMeta']
         ))
         
-        elements.append(Spacer(1, 1*cm))
+        elements.append(Spacer(1, 0.6*cm))
         
         elements.append(Paragraph(
-            "<b>ChatPro AI</b> | Business Intelligence Platform",
+            "<b>ChatPro AI</b> | KI-gestützte Geschäftsanalyse",
             self.styles['CoverMeta']
         ))
         
         # Legal disclaimer at bottom
-        elements.append(Spacer(1, 2*cm))
+        elements.append(Spacer(1, 1*cm))
         
         disclaimer_style = ParagraphStyle(
             'CoverDisclaimer',
@@ -469,10 +469,10 @@ class PDFReportGenerator:
         elements = []
         
         elements.append(Paragraph("Inhaltsverzeichnis", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         toc_data = [
-            ['1.', 'Executive Summary', '3'],
+            ['1.', 'Zusammenfassung', '3'],
             ['2.', 'Unternehmensübersicht', '4'],
             ['3.', 'ROI-Analyse', '5'],
             ['4.', 'Identifizierte Herausforderungen', '6'],
@@ -501,8 +501,8 @@ class PDFReportGenerator:
         """Create executive summary page"""
         elements = []
         
-        elements.append(Paragraph("Executive Summary", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Paragraph("Zusammenfassung", self.styles['Heading1']))
+        elements.append(Spacer(1, 0.3*cm))
         
         # Key findings box
         roi_calc = analysis_data.get('roi_calculation', {})
@@ -518,7 +518,7 @@ class PDFReportGenerator:
         """
         
         elements.append(Paragraph(summary_text, self.styles['BodyText']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         # Key metrics table
         monthly_roi = roi_calc.get('monthly_roi_euro', 0)
@@ -548,12 +548,12 @@ class PDFReportGenerator:
         ]))
         
         elements.append(metrics_table)
-        elements.append(Spacer(1, 0.7*cm))
+        elements.append(Spacer(1, 0.4*cm))
         
         # Quick wins highlight
         quick_wins = [r for r in recommendations if r.get('quick_win', False)]
         if quick_wins:
-            elements.append(Paragraph("⚡ Quick Wins", self.styles['Heading3']))
+            elements.append(Paragraph("⚡ Schnelle Erfolge", self.styles['Heading3']))
             
             for rec in quick_wins[:3]:  # Top 3 quick wins
                 elements.append(Paragraph(
@@ -561,7 +561,7 @@ class PDFReportGenerator:
                     self.styles['BulletPoint']
                 ))
             
-            elements.append(Spacer(1, 0.5*cm))
+            elements.append(Spacer(1, 0.3*cm))
         
         # Chatbot detection
         if crawler_data.get('has_chatbot'):
@@ -577,7 +577,7 @@ class PDFReportGenerator:
                 self.styles['BodyText']
             ))
         
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         # Disclaimer box
         disclaimer_text = (
@@ -680,7 +680,7 @@ class PDFReportGenerator:
         elements = []
         
         elements.append(Paragraph("ROI-Analyse", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         roi_calc = analysis_data.get('roi_calculation', {})
         
@@ -721,13 +721,13 @@ class PDFReportGenerator:
         ]))
         
         elements.append(figures_table)
-        elements.append(Spacer(1, 0.7*cm))
+        elements.append(Spacer(1, 0.4*cm))
         
         # Formula explanation
         formula_text = roi_calc.get('formula_explanation', 'Keine Formel verfügbar')
         elements.append(Paragraph("Berechnungsgrundlage", self.styles['Heading3']))
         elements.append(Paragraph(formula_text, self.styles['BodyText']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         # Assumptions
         assumptions = roi_calc.get('assumptions', [])
@@ -738,7 +738,7 @@ class PDFReportGenerator:
                     f"• {assumption}",
                     self.styles['BulletPoint']
                 ))
-            elements.append(Spacer(1, 0.5*cm))
+            elements.append(Spacer(1, 0.3*cm))
         
         # ROI Disclaimer
         roi_disclaimer_text = (
@@ -766,7 +766,7 @@ class PDFReportGenerator:
         ]))
         
         elements.append(roi_disclaimer_table)
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         # ROI chart
         if monthly_roi > 0:
@@ -786,7 +786,7 @@ class PDFReportGenerator:
         
         elements.append(Paragraph("Identifizierte Herausforderungen", 
                                 self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         if not pain_points:
             elements.append(Paragraph(
@@ -819,7 +819,7 @@ class PDFReportGenerator:
         ]))
         
         elements.append(summary_table)
-        elements.append(Spacer(1, 0.7*cm))
+        elements.append(Spacer(1, 0.4*cm))
         
         # Detailed pain points
         for idx, pain_point in enumerate(pain_points, 1):
@@ -853,7 +853,7 @@ class PDFReportGenerator:
             info_data = [
                 ['Kategorie', category],
                 ['Priorität', priority],
-                ['Business Impact', business_impact],
+                ['Geschäftliche Auswirkung', business_impact],
             ]
             
             info_table = Table(info_data, colWidths=[4*cm, 12*cm])
@@ -871,7 +871,7 @@ class PDFReportGenerator:
             
             # Description
             elements.append(Paragraph(description, self.styles['BodyText']))
-            elements.append(Spacer(1, 0.5*cm))
+            elements.append(Spacer(1, 0.3*cm))
         
         return elements
     
@@ -880,7 +880,7 @@ class PDFReportGenerator:
         elements = []
         
         elements.append(Paragraph("Empfehlungen", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         if not recommendations:
             elements.append(Paragraph(
@@ -894,7 +894,7 @@ class PDFReportGenerator:
         regular_recs = [r for r in recommendations if not r.get('quick_win', False)]
         
         if quick_wins:
-            elements.append(Paragraph("⚡ Quick Wins", self.styles['Heading2']))
+            elements.append(Paragraph("⚡ Schnelle Erfolge", self.styles['Heading2']))
             elements.append(Spacer(1, 0.3*cm))
             
             for idx, rec in enumerate(quick_wins, 1):
@@ -902,7 +902,7 @@ class PDFReportGenerator:
         
         if regular_recs:
             if quick_wins:
-                elements.append(Spacer(1, 0.7*cm))
+                elements.append(Spacer(1, 0.4*cm))
             elements.append(Paragraph("📋 Weitere Empfehlungen", self.styles['Heading2']))
             elements.append(Spacer(1, 0.3*cm))
             
@@ -967,14 +967,14 @@ class PDFReportGenerator:
         elements = []
         
         elements.append(Paragraph("Quellen & Referenzen", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         elements.append(Paragraph(
             f"Diese Analyse basiert auf {len(sources)} branchenspezifischen "
             "Quellen und aktuellen Marktdaten:",
             self.styles['BodyText']
         ))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         for idx, source in enumerate(sources, 1):
             title = source.get('title', 'N/A')
@@ -1008,7 +1008,7 @@ class PDFReportGenerator:
         elements = []
         
         elements.append(Paragraph("Rechtliche Hinweise", self.styles['Heading1']))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         # Main disclaimer sections
         sections = [
@@ -1099,11 +1099,11 @@ class PDFReportGenerator:
                 'title': '7. KONTAKT & SUPPORT',
                 'content': (
                     "<b>ChatPro AI</b>"
-                    "<br/>Business Intelligence Platform"
+                    "<br/>KI-gestützte Geschäftsanalyse"
                     "<br/><br/>"
                     "Website: <link href='https://www.chatproai.io' color='blue'>www.chatproai.io</link>"
                     "<br/>E-Mail: info@chatproai.io"
-                    "<br/>Support: support@chatproai.io"
+
                     "<br/><br/>"
                     "Für Fragen zu diesem Report oder unseren Dienstleistungen kontaktieren Sie uns gerne."
                 )
@@ -1114,10 +1114,10 @@ class PDFReportGenerator:
         for section in sections:
             elements.append(Paragraph(section['title'], self.styles['Heading3']))
             elements.append(Paragraph(section['content'], self.styles['BodyText']))
-            elements.append(Spacer(1, 0.5*cm))
+            elements.append(Spacer(1, 0.3*cm))
         
         # Final notice box
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.3*cm))
         
         final_notice = (
             "<b>⚠️ WICHTIG:</b> Mit der Nutzung dieses Reports bestätigen Sie, dass Sie diese rechtlichen "
@@ -1192,3 +1192,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+   
