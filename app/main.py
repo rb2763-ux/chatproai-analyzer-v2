@@ -15,7 +15,7 @@ import asyncio
 import logging
 
 # Import pipeline
-from .pipeline import AnalysisPipeline
+from .pipeline import ChatProPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,7 +38,7 @@ app.add_middleware(
 )
 
 # Initialize Pipeline
-pipeline = AnalysisPipeline(output_dir="/mnt/user-data/outputs")
+pipeline = ChatProPipeline(output_dir="/mnt/user-data/outputs")
 
 # Request Models
 class AnalysisRequest(BaseModel):
