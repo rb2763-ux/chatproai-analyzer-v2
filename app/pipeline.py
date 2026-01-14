@@ -1,4 +1,4 @@
-﻿"""
+"""
 ChatPro AI - Analysis Pipeline
 PRODUCTION-READY VERSION with proper error handling and logging
 """
@@ -90,7 +90,7 @@ class AnalysisPipeline:
                 crawler_data=crawler_data,
                 industry=industry,
                 company_name=company_name,
-                sources=sources  # â† PASS SOURCES HERE!
+                sources=sources  # ← PASS SOURCES HERE!
             )
             
             # Defensive check
@@ -107,7 +107,7 @@ class AnalysisPipeline:
             pdf_path = os.path.join(self.output_dir, f"report_{analysis_id}.pdf")
             
             try:
-                report_path = self.pdf_generator.generate(
+                report_path = self.pdf_generator.generate_report(
                     crawler_data=crawler_data,
                     analysis_data=analysis_result,
                     company_name=company_name,
