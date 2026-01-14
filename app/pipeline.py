@@ -42,7 +42,7 @@ class ChatProPipeline:
         
         # Step 1: Crawl website
         logger.info(f"Step 1/3: Crawling website (max {max_pages} pages)...")
-        crawler_results = await self.crawler.crawl(url, max_pages=max_pages)
+        crawler_results = await self.crawler.crawl(url)
         
         # Step 2: Analyze with AI
         logger.info("Step 2/3: Analyzing with ChatPro AI V3.1.1...")
