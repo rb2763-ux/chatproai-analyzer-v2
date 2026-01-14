@@ -38,7 +38,7 @@ app.add_middleware(
 )
 
 # Initialize Pipeline
-pipeline = ChatProPipeline(output_dir="/mnt/user-data/outputs")
+pipeline = ChatProPipeline()
 
 # Request Models
 class AnalysisRequest(BaseModel):
