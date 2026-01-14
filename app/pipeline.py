@@ -6,7 +6,7 @@ Version: 3.1.1-FIXED
 
 import logging
 from typing import Dict
-from app.crawler import ChatProCrawler
+from app.crawler import WebsiteCrawler as ChatProCrawler
 from app.analyzer import ChatProAnalyzer
 from app.pdf_generator import generate_pdf_report
 
