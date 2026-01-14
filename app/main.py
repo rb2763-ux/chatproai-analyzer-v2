@@ -37,7 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Pipeline
+# Initialize Pipeline (V3.1.1-FIXED)
 pipeline = ChatProPipeline()
 
 # Request Models
