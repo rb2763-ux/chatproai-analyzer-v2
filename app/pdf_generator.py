@@ -1,431 +1,419 @@
-﻿"""
-ChatPro AI - PDF Report Generator
-VERSION 3.1 - MODERN LAYOUT
+"""
+ChatPro AI V3.1 - Modern PDF Report Generator with Transparency Features
+Author: ChatPro Team
+Version: 3.1-FIXED (Robust Nested Data Access)
 """
 
-import os
-from datetime import datetime
-from typing import Dict, List
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, KeepTogether
-)
-from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from datetime import datetime
+import logging
 
-# PAGE SETTINGS - V3.1 MORE WHITESPACE
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN_LEFT = 2.5 * cm
-MARGIN_RIGHT = 2.5 * cm
-MARGIN_TOP = 2.5 * cm
-MARGIN_BOTTOM = 2.5 * cm
+logger = logging.getLogger(__name__)
 
-# COLORS
-COLOR_PRIMARY = colors.HexColor('#2C3E50')
-COLOR_SECONDARY = colors.HexColor('#3498DB')
-COLOR_ACCENT = colors.HexColor('#E74C3C')
-COLOR_SUCCESS = colors.HexColor('#27AE60')
-COLOR_WARNING = colors.HexColor('#F39C12')
-COLOR_TEXT = colors.HexColor('#2C3E50')
 
-# SPACING
-SECTION_SPACING = 0.4 * cm
-PARAGRAPH_SPACING = 0.3 * cm
-
-class NumberedCanvas(canvas.Canvas):
-    def __init__(self, *args, **kwargs):
-        canvas.Canvas.__init__(self, *args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_number(num_pages)
-            canvas.Canvas.showPage(self)
-        canvas.Canvas.save(self)
-
-    def draw_page_number(self, page_count):
-        self.setFont("Helvetica", 9)
-        self.setFillColor(colors.grey)
-        page_num = f"Seite {self._pageNumber} von {page_count}"
-        self.drawRightString(PAGE_WIDTH - MARGIN_RIGHT, MARGIN_BOTTOM/2, page_num)
-        self.drawString(MARGIN_LEFT, MARGIN_BOTTOM/2, "www.chatproai.io")
-
-class PDFReportGenerator:
-    def __init__(self, output_dir: str = "reports"):
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        self.styles = self._create_styles()
-
-    def _create_styles(self) -> Dict:
-        styles = getSampleStyleSheet()
+class ChatProPDFGenerator:
+    """
+    Modern PDF Report Generator with Transparency Features
+    
+    V3.1 Features:
+    - Section 2.1: Analysierte Website-Daten (Crawler Summary)
+    - Section 3.1: Methodik & Datenquellen
+    - Robust nested data access with .get() fallbacks
+    - Package badge design
+    - Quality score visualization
+    """
+    
+    def __init__(self):
+        self.width, self.height = A4
+        self.styles = getSampleStyleSheet()
+        self._setup_custom_styles()
+    
+    def _setup_custom_styles(self):
+        """Setup custom paragraph styles"""
+        # Title style
+        self.styles.add(ParagraphStyle(
+            name='CustomTitle',
+            parent=self.styles['Heading1'],
+            fontSize=28,
+            textColor=colors.HexColor('#1a1a1a'),
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        ))
         
-        custom_styles = {
-            'CustomTitle': ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=COLOR_PRIMARY,
-                spaceAfter=0.5*cm,
-                alignment=TA_CENTER,
-                leading=30
-            ),
-            'CustomHeading1': ParagraphStyle(
-                'CustomHeading1',
-                parent=styles['Heading1'],
-                fontSize=16,
-                textColor=COLOR_PRIMARY,
-                spaceAfter=0.4*cm,
-                spaceBefore=0.5*cm,
-                leading=20
-            ),
-            'CustomHeading2': ParagraphStyle(
-                'CustomHeading2',
-                parent=styles['Heading2'],
-                fontSize=14,
-                textColor=COLOR_SECONDARY,
-                spaceAfter=0.3*cm,
-                spaceBefore=0.4*cm,
-                leading=18
-            ),
-            'CustomBody': ParagraphStyle(
-                'CustomBody',
-                parent=styles['BodyText'],
-                fontSize=10,
-                textColor=COLOR_TEXT,
-                alignment=TA_JUSTIFY,
-                spaceAfter=PARAGRAPH_SPACING,
-                leading=14
-            ),
-            'CustomBullet': ParagraphStyle(
-                'CustomBullet',
-                parent=styles['BodyText'],
-                fontSize=10,
-                textColor=COLOR_TEXT,
-                leftIndent=0.5*cm,
-                spaceAfter=0.2*cm,
-                leading=14
-            )
-        }
+        # Subtitle style
+        self.styles.add(ParagraphStyle(
+            name='CustomSubtitle',
+            parent=self.styles['Normal'],
+            fontSize=14,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            fontName='Helvetica'
+        ))
         
-        return custom_styles
-
-    def generate_report(self, analysis_data: Dict, output_filename: str) -> str:
-        output_path = os.path.join(self.output_dir, output_filename)
+        # Section header style
+        self.styles.add(ParagraphStyle(
+            name='SectionHeader',
+            parent=self.styles['Heading2'],
+            fontSize=18,
+            textColor=colors.HexColor('#2c3e50'),
+            spaceAfter=12,
+            spaceBefore=20,
+            fontName='Helvetica-Bold'
+        ))
         
+        # Subsection header style
+        self.styles.add(ParagraphStyle(
+            name='SubsectionHeader',
+            parent=self.styles['Heading3'],
+            fontSize=14,
+            textColor=colors.HexColor('#34495e'),
+            spaceAfter=8,
+            spaceBefore=12,
+            fontName='Helvetica-Bold'
+        ))
+        
+        # Body text style
+        self.styles.add(ParagraphStyle(
+            name='CustomBody',
+            parent=self.styles['Normal'],
+            fontSize=11,
+            textColor=colors.HexColor('#333333'),
+            spaceAfter=10,
+            alignment=TA_JUSTIFY,
+            fontName='Helvetica',
+            leading=16
+        ))
+        
+        # Highlight style
+        self.styles.add(ParagraphStyle(
+            name='Highlight',
+            parent=self.styles['Normal'],
+            fontSize=12,
+            textColor=colors.HexColor('#2980b9'),
+            spaceAfter=10,
+            fontName='Helvetica-Bold'
+        ))
+    
+    def generate_report(self, analysis_data: dict, output_filename: str):
+        """
+        Generate PDF report from analysis data.
+        
+        Args:
+            analysis_data: Dictionary with nested structure from analyzer.py
+            output_filename: Output PDF file path
+        """
+        logger.info(f"Generating PDF report: {output_filename}")
+        
+        # Create PDF document
         doc = SimpleDocTemplate(
-            output_path,
+            output_filename,
             pagesize=A4,
-            leftMargin=MARGIN_LEFT,
-            rightMargin=MARGIN_RIGHT,
-            topMargin=MARGIN_TOP,
-            bottomMargin=MARGIN_BOTTOM,
-            title="ChatPro AI - Business Analysis Report"
+            rightMargin=2*cm,
+            leftMargin=2*cm,
+            topMargin=2*cm,
+            bottomMargin=2*cm
         )
         
+        # Build content
         story = []
+        
+        # Cover page
         story.extend(self._create_cover_page(analysis_data))
         story.append(PageBreak())
-        story.extend(self._create_toc())
-        story.append(PageBreak())
-        story.extend(self._create_executive_summary(analysis_data))
-        story.append(Spacer(1, SECTION_SPACING))
-        story.extend(self._create_company_overview(analysis_data))
-        story.append(Spacer(1, SECTION_SPACING))
-        story.extend(self._create_roi_section(analysis_data))
-        story.append(PageBreak())
-        story.extend(self._create_pain_points_section(analysis_data))
-        story.append(Spacer(1, SECTION_SPACING))
-        story.extend(self._create_recommendations_section(analysis_data))
-        story.append(PageBreak())
-        story.extend(self._create_sources_section(analysis_data))
         
-        doc.build(story, canvasmaker=NumberedCanvas)
-        return output_path
-
-    def _create_cover_page(self, data: Dict) -> List:
+        # Executive Summary
+        story.extend(self._create_executive_summary(analysis_data))
+        story.append(PageBreak())
+        
+        # Section 1: Aktuelle Situation (with 2.1 Crawler Summary)
+        story.extend(self._create_current_situation(analysis_data))
+        
+        # Section 2: ChatPro AI Lösung
+        story.extend(self._create_solution_section(analysis_data))
+        story.append(PageBreak())
+        
+        # Section 3: ROI & Implementation (with 3.1 Methodology)
+        story.extend(self._create_roi_implementation(analysis_data))
+        
+        # Build PDF
+        doc.build(story)
+        logger.info(f"✅ PDF report generated successfully: {output_filename}")
+    
+    def _safe_get(self, data: dict, *keys, default='N/A'):
+        """
+        Safely navigate nested dictionary structures.
+        
+        Args:
+            data: Dictionary to navigate
+            *keys: Sequence of keys to traverse
+            default: Default value if key not found
+        
+        Returns:
+            Value at nested key path or default
+        """
+        current = data
+        for key in keys:
+            if isinstance(current, dict):
+                current = current.get(key)
+                if current is None:
+                    return default
+            else:
+                return default
+        return current if current is not None else default
+    
+    def _create_cover_page(self, data: dict):
+        """Create modern cover page with package badge"""
         elements = []
+        
+        # Add spacing from top
         elements.append(Spacer(1, 3*cm))
         
-        title = Paragraph("ChatPro AI<br/>Business Analysis Report", self.styles['CustomTitle'])
+        # Main title
+        title = Paragraph("ChatPro AI Business Analyse", self.styles['CustomTitle'])
         elements.append(title)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Company name - ROBUST ACCESS
+        company_name = self._safe_get(data, 'company_overview', 'company_name', default='Ihr Unternehmen')
+        subtitle = Paragraph(f"Erstellt für: <b>{company_name}</b>", self.styles['CustomSubtitle'])
+        elements.append(subtitle)
         elements.append(Spacer(1, 1*cm))
         
-        company = data.get('company_overview', {}).get('company_name', 'N/A')
-        company_para = Paragraph(
-            f"<b>{company}</b>",
-            ParagraphStyle('CompanyName', fontSize=18, textColor=COLOR_SECONDARY, alignment=TA_CENTER)
+        # Package badge - ROBUST ACCESS
+        package = self._safe_get(data, 'recommended_package', default='BUSINESS')
+        package_colors = {
+            'PREMIUM': colors.HexColor('#d4af37'),  # Gold
+            'BUSINESS': colors.HexColor('#2980b9'),  # Blue
+            'BASIC': colors.HexColor('#27ae60')     # Green
+        }
+        package_color = package_colors.get(package, colors.HexColor('#2980b9'))
+        
+        package_table = Table(
+            [[f"Empfohlenes Paket: {package}"]],
+            colWidths=[10*cm]
         )
-        elements.append(company_para)
+        package_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 16),
+            ('BACKGROUND', (0, 0), (-1, -1), package_color),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+            ('TOPPADDING', (0, 0), (-1, -1), 15),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+            ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+        ]))
+        elements.append(package_table)
+        elements.append(Spacer(1, 1*cm))
+        
+        # Quality Score - ROBUST ACCESS
+        quality_score = self._safe_get(data, 'quality_score', 'total_score', default=0)
+        score_text = Paragraph(
+            f"<b>Quality Score:</b> {quality_score}/200 Punkte",
+            self.styles['Highlight']
+        )
+        elements.append(score_text)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # ROI Estimate - ROBUST ACCESS
+        roi = self._safe_get(data, 'roi_estimate', 'estimated_monthly_roi', default='Auf Anfrage')
+        roi_text = Paragraph(
+            f"<b>Geschätzter monatlicher ROI:</b> {roi}",
+            self.styles['Highlight']
+        )
+        elements.append(roi_text)
         elements.append(Spacer(1, 2*cm))
         
-        date_str = datetime.now().strftime("%d. %B %Y")
-        date_para = Paragraph(date_str, ParagraphStyle('Date', fontSize=12, textColor=colors.grey, alignment=TA_CENTER))
-        elements.append(date_para)
-        elements.append(Spacer(1, 3*cm))
-        
-        confidential = Paragraph(
-            "<b>VERTRAULICH</b><br/>Dieser Bericht enthält vertrauliche Geschäftsinformationen.",
-            ParagraphStyle('Confidential', fontSize=10, textColor=COLOR_ACCENT, alignment=TA_CENTER)
-        )
-        elements.append(confidential)
+        # Date
+        date_str = datetime.now().strftime("%d.%m.%Y")
+        date_text = Paragraph(f"Erstellt am: {date_str}", self.styles['CustomBody'])
+        elements.append(date_text)
         
         return elements
-
-    def _create_toc(self) -> List:
+    
+    def _create_executive_summary(self, data: dict):
+        """Create executive summary section"""
         elements = []
-        elements.append(Paragraph("Inhaltsverzeichnis", self.styles['CustomHeading1']))
+        
+        elements.append(Paragraph("Executive Summary", self.styles['SectionHeader']))
         elements.append(Spacer(1, 0.5*cm))
         
-        toc_items = [
-            "1. Zusammenfassung",
-            "2. Unternehmensübersicht",
-            "3. ROI-Analyse",
-            "4. Identifizierte Herausforderungen",
-            "5. Empfehlungen",
-            "6. Quellen & Referenzen",
-            "7. Rechtliche Hinweise"
-        ]
+        # Company overview - ROBUST ACCESS
+        company_name = self._safe_get(data, 'company_overview', 'company_name', default='Ihr Unternehmen')
+        industry = self._safe_get(data, 'company_overview', 'industry', default='Hospitality')
+        website = self._safe_get(data, 'company_overview', 'website_url', default='N/A')
         
-        for item in toc_items:
-            elements.append(Paragraph(item, self.styles['CustomBody']))
-            elements.append(Spacer(1, 0.2*cm))
-        
-        return elements
-
-    def _create_executive_summary(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("1. Zusammenfassung", self.styles['CustomHeading1']))
-        
-        recommended_package = data.get('recommended_package', '').upper()
-        if recommended_package:
-            badge_color = COLOR_SUCCESS if recommended_package == 'PREMIUM' else COLOR_SECONDARY
-            badge_table = Table(
-                [[Paragraph(f"<b>EMPFOHLENES PAKET: {recommended_package}</b>", 
-                           ParagraphStyle('Badge', fontSize=12, textColor=colors.white, alignment=TA_CENTER))]],
-                colWidths=[10*cm]
-            )
-            badge_table.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,-1), badge_color),
-                ('PADDING', (0,0), (-1,-1), 0.3*cm),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER')
-            ]))
-            elements.append(badge_table)
-            elements.append(Spacer(1, 0.4*cm))
-        
-        quality_score = data.get('quality_score')
-        if quality_score is not None:
-            score_para = Paragraph(f"<b>Quality Score:</b> {quality_score}/200 Punkte", self.styles['CustomBody'])
-            elements.append(score_para)
-            elements.append(Spacer(1, 0.3*cm))
-        
-        summary = data.get('executive_summary', 'Keine Zusammenfassung verfügbar.')
-        elements.append(Paragraph(summary, self.styles['CustomBody']))
-        
-        return elements
-
-    def _create_company_overview(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("2. Unternehmensübersicht", self.styles['CustomHeading1']))
-        
-        overview = data.get('company_overview', {})
-        overview_data = [
-            ['Unternehmen:', overview.get('company_name', 'N/A')],
-            ['Branche:', overview.get('industry', 'N/A')],
-            ['Website:', overview.get('website_url', 'N/A')],
-            ['Analysedatum:', datetime.now().strftime("%d.%m.%Y")]
-        ]
-        
-        table = Table(overview_data, colWidths=[5*cm, 11*cm])
-        table.setStyle(TableStyle([
-            ('FONT', (0,0), (0,-1), 'Helvetica-Bold', 10),
-            ('FONT', (1,0), (1,-1), 'Helvetica', 10),
-            ('TEXTCOLOR', (0,0), (-1,-1), COLOR_TEXT),
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('PADDING', (0,0), (-1,-1), 0.2*cm),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0.3*cm)
-        ]))
-        
-        elements.append(table)
-        return elements
-
-    def _create_roi_section(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("3. ROI-Analyse", self.styles['CustomHeading1']))
-        
-        roi_data = data.get('roi_calculation', {})
-        
-        if not roi_data or roi_data.get('monthly_roi_euro', 0) == 0:
-            elements.append(Paragraph("Keine ROI-Daten verfügbar.", self.styles['CustomBody']))
-            return elements
-        
-        roi_metrics = [
-            ['ROI-Potenzial (monatlich):', f"€{roi_data.get('monthly_roi_euro', 0):,.0f}".replace(',', '.')],
-            ['ROI-Multiplikator:', f"{roi_data.get('roi_multiplier', 0):.1f}x"],
-            ['Break-Even Zeitraum:', f"{roi_data.get('break_even_months', 0):.1f} Monate"]
-        ]
-        
-        table = Table(roi_metrics, colWidths=[8*cm, 8*cm])
-        table.setStyle(TableStyle([
-            ('FONT', (0,0), (0,-1), 'Helvetica-Bold', 11),
-            ('FONT', (1,0), (1,-1), 'Helvetica', 11),
-            ('TEXTCOLOR', (0,0), (-1,-1), COLOR_TEXT),
-            ('PADDING', (0,0), (-1,-1), 0.3*cm),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0.4*cm)
-        ]))
-        
-        elements.append(table)
-        elements.append(Spacer(1, 0.5*cm))
-        
-        package_details = data.get('package_details', {})
-        if package_details:
-            elements.append(Paragraph("Paket-Details:", self.styles['CustomHeading2']))
-            
-            pkg_data = [
-                ['Setup-Kosten:', f"€{package_details.get('setup_cost_euro', 0):,.0f}".replace(',', '.')],
-                ['Monatliche Kosten:', f"€{package_details.get('monthly_cost_euro', 0):,.0f}".replace(',', '.')]
-            ]
-            
-            pkg_table = Table(pkg_data, colWidths=[8*cm, 8*cm])
-            pkg_table.setStyle(TableStyle([
-                ('FONT', (0,0), (0,-1), 'Helvetica-Bold', 10),
-                ('FONT', (1,0), (1,-1), 'Helvetica', 10),
-                ('TEXTCOLOR', (0,0), (-1,-1), COLOR_TEXT),
-                ('PADDING', (0,0), (-1,-1), 0.2*cm)
-            ]))
-            
-            elements.append(pkg_table)
-            elements.append(Spacer(1, 0.4*cm))
-        
-        assumptions = roi_data.get('assumptions', [])
-        if assumptions:
-            elements.append(Paragraph("Annahmen:", self.styles['CustomHeading2']))
-            for assumption in assumptions:
-                elements.append(Paragraph(f"• {assumption}", self.styles['CustomBullet']))
-        
-        return elements
-
-    def _create_pain_points_section(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("4. Identifizierte Herausforderungen", self.styles['CustomHeading1']))
-        
-        pain_points = data.get('pain_points', [])
-        
-        if not pain_points:
-            elements.append(Paragraph("Keine spezifischen Herausforderungen identifiziert.", self.styles['CustomBody']))
-            return elements
-        
-        priority_colors = {
-            'HIGH': COLOR_ACCENT,
-            'MEDIUM': COLOR_WARNING,
-            'LOW': COLOR_SUCCESS
-        }
-        
-        for i, pain in enumerate(pain_points, 1):
-            priority = pain.get('priority', 'MEDIUM').upper()
-            priority_color = priority_colors.get(priority, COLOR_WARNING)
-            
-            header = Paragraph(
-                f"<b>{i}. {pain.get('title', 'N/A')}</b> <font color='{priority_color.hexval()}'>({priority})</font>",
-                self.styles['CustomHeading2']
-            )
-            elements.append(header)
-            
-            desc = pain.get('description', 'Keine Beschreibung verfügbar.')
-            elements.append(Paragraph(desc, self.styles['CustomBody']))
-            elements.append(Spacer(1, 0.3*cm))
-        
-        return elements
-
-    def _create_recommendations_section(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("5. Empfehlungen", self.styles['CustomHeading1']))
-        
-        recommendations = data.get('recommendations', [])
-        
-        if not recommendations:
-            elements.append(Paragraph("Keine Empfehlungen verfügbar.", self.styles['CustomBody']))
-            return elements
-        
-        for i, rec in enumerate(recommendations, 1):
-            priority = rec.get('priority', 'MEDIUM').upper()
-            
-            title = Paragraph(f"<b>{i}. {rec.get('title', 'N/A')}</b> ({priority})", self.styles['CustomHeading2'])
-            elements.append(title)
-            
-            desc = rec.get('description', 'Keine Beschreibung verfügbar.')
-            elements.append(Paragraph(desc, self.styles['CustomBody']))
-            
-            value = rec.get('business_value', '')
-            if value:
-                elements.append(Paragraph(f"<b>Geschäftswert:</b> {value}", self.styles['CustomBody']))
-            
-            elements.append(Spacer(1, 0.4*cm))
-        
-        return elements
-
-    def _create_sources_section(self, data: Dict) -> List:
-        elements = []
-        elements.append(Paragraph("6. Quellen & Referenzen", self.styles['CustomHeading1']))
-        
-        methodology = data.get('methodology', '')
-        if methodology:
-            elements.append(Paragraph(methodology, self.styles['CustomBody']))
-            elements.append(Spacer(1, 0.4*cm))
-        
-        disclaimer = """
-        <b>Rechtliche Hinweise:</b><br/>
-        Dieser Bericht wurde auf Basis öffentlich zugänglicher Informationen und Branchendaten erstellt. 
-        Die ROI-Berechnungen sind Schätzungen und können je nach tatsächlicher Implementierung variieren. 
-        ChatPro AI übernimmt keine Haftung für geschäftliche Entscheidungen, die auf Basis dieses Berichts getroffen werden.
-        Alle Daten werden gemäß DSGVO verarbeitet.
+        summary_text = f"""
+        Diese Analyse wurde für <b>{company_name}</b> ({industry}) erstellt und zeigt das 
+        Potenzial der ChatPro AI Integration für Ihre Website ({website}).
+        <br/><br/>
+        Unsere Analyse basiert auf einer detaillierten Untersuchung Ihrer Website und 
+        aktuellen Chatbot-Infrastruktur. Wir haben konservative ROI-Schätzungen verwendet, 
+        um realistische Erwartungen zu setzen.
         """
+        elements.append(Paragraph(summary_text, self.styles['CustomBody']))
+        elements.append(Spacer(1, 0.5*cm))
         
-        elements.append(Paragraph(disclaimer, self.styles['CustomBody']))
+        # Key benefits - ROBUST ACCESS
+        benefits = data.get('key_benefits', [])
+        if benefits:
+            elements.append(Paragraph("<b>Hauptvorteile der ChatPro AI Integration:</b>", self.styles['SubsectionHeader']))
+            for benefit in benefits:
+                elements.append(Paragraph(f"• {benefit}", self.styles['CustomBody']))
+        
+        return elements
+    
+    def _create_current_situation(self, data: dict):
+        """Create current situation section with crawler summary"""
+        elements = []
+        
+        elements.append(Paragraph("1. Aktuelle Situation", self.styles['SectionHeader']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Chatbot capabilities - ROBUST ACCESS
+        chatbot_detected = self._safe_get(data, 'chatbot_capabilities', 'chatbot_detected', default=False)
+        chatbot_type = self._safe_get(data, 'chatbot_capabilities', 'chatbot_type', default='Nicht erkannt')
+        
+        status_text = "✅ Chatbot erkannt" if chatbot_detected else "❌ Kein Chatbot erkannt"
+        elements.append(Paragraph(f"<b>Chatbot Status:</b> {status_text}", self.styles['CustomBody']))
+        
+        if chatbot_detected:
+            elements.append(Paragraph(f"<b>Typ:</b> {chatbot_type}", self.styles['CustomBody']))
+        
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # NEW: Section 2.1 - Analysierte Website-Daten (Crawler Summary)
+        elements.append(Paragraph("1.1 Analysierte Website-Daten", self.styles['SubsectionHeader']))
+        elements.append(Spacer(1, 0.2*cm))
+        
+        crawler_summary = data.get('crawler_summary', {})
+        
+        crawler_data = [
+            ['Metrik', 'Wert'],
+            ['Analysierte Seiten', str(self._safe_get(crawler_summary, 'total_pages_crawled', default=0))],
+            ['Chatbot Status', self._safe_get(crawler_summary, 'chatbot_status', default='Nicht erkannt')],
+            ['Zimmerzahl', str(self._safe_get(crawler_summary, 'room_count', default='Nicht erkannt'))],
+            ['Sprachen', ', '.join(self._safe_get(crawler_summary, 'languages_detected', default=['de']))],
+        ]
+        
+        crawler_table = Table(crawler_data, colWidths=[8*cm, 8*cm])
+        crawler_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+        ]))
+        elements.append(crawler_table)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Key features detected
+        key_features = self._safe_get(crawler_summary, 'key_features', default=[])
+        if key_features:
+            elements.append(Paragraph("<b>Erkannte Website-Features:</b>", self.styles['CustomBody']))
+            for feature in key_features:
+                elements.append(Paragraph(f"• {feature}", self.styles['CustomBody']))
+        
+        return elements
+    
+    def _create_solution_section(self, data: dict):
+        """Create ChatPro AI solution section"""
+        elements = []
+        
+        elements.append(Paragraph("2. ChatPro AI Lösung", self.styles['SectionHeader']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Package recommendation - ROBUST ACCESS
+        package = self._safe_get(data, 'recommended_package', default='BUSINESS')
+        elements.append(Paragraph(f"<b>Empfohlenes Paket:</b> {package}", self.styles['Highlight']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Competitive advantages - ROBUST ACCESS
+        advantages = data.get('competitive_advantages', [])
+        if advantages:
+            elements.append(Paragraph("<b>Wettbewerbsvorteile:</b>", self.styles['SubsectionHeader']))
+            for advantage in advantages:
+                elements.append(Paragraph(f"• {advantage}", self.styles['CustomBody']))
+        
+        return elements
+    
+    def _create_roi_implementation(self, data: dict):
+        """Create ROI and implementation section with methodology"""
+        elements = []
+        
+        elements.append(Paragraph("3. ROI & Implementierung", self.styles['SectionHeader']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # ROI estimate - ROBUST ACCESS
+        roi = self._safe_get(data, 'roi_estimate', 'estimated_monthly_roi', default='Auf Anfrage')
+        elements.append(Paragraph(f"<b>Geschätzter monatlicher ROI:</b> {roi}", self.styles['Highlight']))
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # NEW: Section 3.1 - Methodik & Datenquellen
+        elements.append(Paragraph("3.1 Methodik & Datenquellen", self.styles['SubsectionHeader']))
+        elements.append(Spacer(1, 0.2*cm))
+        
+        methodology = data.get('methodology_details', {})
+        
+        # Data sources
+        data_sources = self._safe_get(methodology, 'data_sources', default=[])
+        if data_sources:
+            elements.append(Paragraph("<b>Datenquellen:</b>", self.styles['CustomBody']))
+            for source in data_sources:
+                elements.append(Paragraph(f"• {source}", self.styles['CustomBody']))
+            elements.append(Spacer(1, 0.3*cm))
+        
+        # ROI calculation method
+        roi_method = self._safe_get(methodology, 'roi_calculation_method', default='Standardmethode')
+        elements.append(Paragraph("<b>ROI-Berechnungsmethode:</b>", self.styles['CustomBody']))
+        elements.append(Paragraph(roi_method, self.styles['CustomBody']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Quality score breakdown
+        quality_breakdown = self._safe_get(methodology, 'quality_score_breakdown', default='Siehe Quality Score')
+        elements.append(Paragraph("<b>Quality Score Berechnung:</b>", self.styles['CustomBody']))
+        elements.append(Paragraph(quality_breakdown, self.styles['CustomBody']))
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Conservative assumptions
+        assumptions = self._safe_get(methodology, 'conservative_assumptions', default=[])
+        if assumptions:
+            elements.append(Paragraph("<b>Konservative Annahmen:</b>", self.styles['CustomBody']))
+            for assumption in assumptions:
+                elements.append(Paragraph(f"• {assumption}", self.styles['CustomBody']))
+        
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Implementation roadmap - ROBUST ACCESS
+        roadmap = data.get('implementation_roadmap', [])
+        if roadmap:
+            elements.append(Paragraph("3.2 Implementierungs-Roadmap", self.styles['SubsectionHeader']))
+            for i, step in enumerate(roadmap, 1):
+                elements.append(Paragraph(f"<b>Schritt {i}:</b> {step}", self.styles['CustomBody']))
+        
         return elements
 
-def main():
-    generator = PDFReportGenerator()
-    
-    test_data = {
-        'executive_summary': 'Test Summary',
-        'company_overview': {
-            'company_name': 'Test Company',
-            'industry': 'Hotel',
-            'website_url': 'https://example.com'
-        },
-        'recommended_package': 'PREMIUM',
-        'quality_score': 125,
-        'package_details': {
-            'setup_cost_euro': 4999,
-            'monthly_cost_euro': 799
-        },
-        'roi_calculation': {
-            'monthly_roi_euro': 3500,
-            'roi_multiplier': 4.4,
-            'break_even_months': 1.4,
-            'assumptions': ['Test assumption']
-        },
-        'pain_points': [
-            {'title': 'Test Pain Point', 'description': 'Test description', 'priority': 'HIGH'}
-        ],
-        'recommendations': [
-            {'title': 'Test Recommendation', 'description': 'Test description', 'priority': 'HIGH'}
-        ],
-        'methodology': 'Test methodology'
-    }
-    
-    output = generator.generate_report(test_data, 'test_report_v31.pdf')
-    print(f"✅ PDF generated: {output}")
 
-if __name__ == '__main__':
-    main()
+def generate_pdf_report(analysis_data: dict, output_filename: str):
+    """
+    Convenience function to generate PDF report.
+    
+    Args:
+        analysis_data: Dictionary with nested structure from analyzer.py
+        output_filename: Output PDF file path
+    """
+    generator = ChatProPDFGenerator()
+    generator.generate_report(analysis_data, output_filename)
