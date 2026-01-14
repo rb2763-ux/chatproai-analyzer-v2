@@ -102,13 +102,12 @@ def process_analysis_task_sync(analysis_id: str, request: AnalysisRequest):
         
         # Run async pipeline in sync context
         result = loop.run_until_complete(
-            pipeline.generate_report(
-                website_url=request.website_url,
-                industry=request.industry,
-                email=request.email,
-                company_name=request.company_name,
-                analysis_id=analysis_id
-            )
+          pipeline.generate_report(
+             url=request.website_url,
+             output_filename=f"/tmp/{analysis_id}.pdf",
+             max_pages=10
+          )
+
         )
         
         logger.info(f"[{analysis_id[:8]}] Pipeline completed with status: {result.get('status')}")
