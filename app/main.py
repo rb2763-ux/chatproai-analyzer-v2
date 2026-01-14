@@ -102,7 +102,7 @@ def process_analysis_task_sync(analysis_id: str, request: AnalysisRequest):
         
         # Run async pipeline in sync context
         result = loop.run_until_complete(
-            pipeline.process(
+            pipeline.generate_report(
                 website_url=request.website_url,
                 industry=request.industry,
                 email=request.email,
