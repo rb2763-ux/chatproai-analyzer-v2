@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ChatPro AI - Business Analyzer
-VERSION 3.1 - QUALITY SCORE + PREMIUM + INTELLIGENT ESTIMATION
+VERSION 3.1.1 - PRIORITY FIX
 
 Features:
 - Quality Score System (0-200 points)
@@ -11,6 +11,7 @@ Features:
 - Realistic ROI calculations based on room count
 - Chatbot-aware recommendations
 - 100% German output
+- FIX: Chatbot Priority = HIGH (not MEDIUM!)
 """
 
 import os
@@ -101,10 +102,11 @@ class AIAnalyzer:
     """
     AI-powered business analyzer using OpenAI with structured outputs
     
-    Version: 3.1
+    Version: 3.1.1
     - Quality Score System
     - Premium Package Recommendation
     - Intelligent Room Count Estimation
+    - CHATBOT PRIORITY = HIGH
     """
     
     def __init__(self):
@@ -119,13 +121,13 @@ class AIAnalyzer:
         logger.info(f"AIAnalyzer initialized with model: {self.model}")
     
     def _build_system_prompt(self, industry: str, sources: List[Dict]) -> str:
-        """Build comprehensive system prompt with V3.1 enhancements"""
+        """Build comprehensive system prompt with V3.1.1 enhancements"""
         
         sources_text = self._format_sources(sources)
         
         prompt = f"""Du bist ein Senior Business Analyst für ChatPro AI mit Spezialisierung auf die {industry}-Branche.
 
-VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
+VERSION 3.1.1 - PREMIUM-FOCUS + CHATBOT HIGH PRIORITY
 
 # QUALITY SCORE SYSTEM (0-200 PUNKTE)
 
@@ -191,14 +193,28 @@ ELSE: estimated = 50-80 (Standard)
 - Uplift: 5-12%
 - ROI: Premium €2.500-5.000, Business €800-1.500
 
-# CHATBOT-AWARE
+# CHATBOT-AWARE LOGIC
 
-IF has_chatbot:
-  Recommendation: "Upgrade auf Premium"
+**KRITISCH: CHATBOT PRIORITY = IMMER HIGH!**
+
+IF has_chatbot == False:
+  Pain Point: "Fehlender Chatbot"
+  Priority: **HIGH** (nicht MEDIUM!)
+  Recommendation: "Einführung AI-Chatbot"
+  Priority: **HIGH** (nicht MEDIUM!)
+  Begründung: 24/7 Verfügbarkeit ist KRITISCH für Hotels!
+  Business Impact: "10-15% verlorene Buchungen durch fehlende Sofortantworten"
+  
+IF has_chatbot == True:
+  Recommendation: "Upgrade auf Premium Chatbot"
+  Priority: HIGH
   Setup: €500-1.000
-ELSE:
-  Recommendation: "Einführung Chatbot"
-  Setup: €1.799 (Business) / €4.999 (Premium)
+
+**WARUM HIGH PRIORITY?**
+- Hotels verlieren 10-15% Buchungen ohne 24/7 Support
+- Internationale Gäste erwarten sofortige Antworten
+- Wettbewerber haben bereits Chatbots
+- ROI Break-Even <2 Monate
 
 # PACKAGE DETAILS
 
@@ -216,7 +232,13 @@ ELSE:
 
 {sources_text}
 
-Erstelle jetzt die vollständige Analyse auf DEUTSCH!
+**WICHTIG:**
+- Chatbot = IMMER HIGH Priority!
+- Mehrsprachigkeit = HIGH Priority bei internationalen Gästen
+- Realistische ROI-Zahlen
+- 100% DEUTSCH
+
+Erstelle jetzt die vollständige Analyse!
 """
         return prompt
     
@@ -259,12 +281,12 @@ Erstelle jetzt die vollständige Analyse auf DEUTSCH!
             user_msg += f"- Room Count: {crawler_data.get('room_count', 'None')}\n"
             user_msg += f"- Mobile: {crawler_data.get('mobile_responsive', False)}\n"
             user_msg += f"- Languages: {crawler_data.get('languages', [])}\n\n"
-            user_msg += "**AUFGABE:**\n"
-            user_msg += "1. Berechne Quality Score\n"
-            user_msg += "2. Schätze room_count falls None\n"
-            user_msg += "3. Empfehle PREMIUM wenn Score >=40\n"
-            user_msg += "4. Berechne ROI\n"
-            user_msg += "5. DEUTSCH!\n\n"
+            user_msg += "**WICHTIG:**\n"
+            user_msg += "- Chatbot = HIGH Priority!\n"
+            user_msg += "- Quality Score berechnen\n"
+            user_msg += "- Zimmerzahl schätzen\n"
+            user_msg += "- PREMIUM wenn Score >=40\n"
+            user_msg += "- DEUTSCH!\n\n"
             user_msg += "Erstelle die Analyse!"
             
             # Call OpenAI with structured output
@@ -288,6 +310,7 @@ Erstelle jetzt die vollständige Analyse auf DEUTSCH!
             logger.info(f"   Quality Score: {result.quality_score}")
             logger.info(f"   Room Count: {result.estimated_room_count} ({result.room_count_method})")
             logger.info(f"   ROI: €{result.roi_calculation.monthly_roi_euro:,}")
+            logger.info(f"   Chatbot Priority: {result.chatbot_priority}")
             
             return result.model_dump()
             
@@ -323,7 +346,7 @@ if __name__ == "__main__":
         analyzer = AIAnalyzer()
         
         print("\n" + "="*80)
-        print("ANALYZER V3.1 TEST")
+        print("ANALYZER V3.1.1 TEST - CHATBOT HIGH PRIORITY")
         print("="*80)
         
         result = await analyzer.analyze(
@@ -343,5 +366,13 @@ if __name__ == "__main__":
         print(f"   ROI: €{result['roi_calculation']['monthly_roi_euro']:,}")
         print(f"   Multiplier: {result['roi_calculation']['roi_multiplier']}x")
         print(f"   Break-Even: {result['roi_calculation']['break_even_months']} Mon")
+        print(f"   Chatbot Priority: {result['chatbot_priority']}")
+        
+        # Check Chatbot Recommendation Priority
+        for rec in result['recommendations']:
+            if 'chatbot' in rec['title'].lower():
+                print(f"\n   Chatbot Recommendation:")
+                print(f"      Title: {rec['title']}")
+                print(f"      Priority: {rec['priority']} {'✅' if rec['priority'] == 'HIGH' else '❌ SHOULD BE HIGH!'}")
     
     asyncio.run(test())
