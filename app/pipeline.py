@@ -108,13 +108,10 @@ class AnalysisPipeline:
             
             try:
                 # analysis_result now contains crawler_summary and methodology_details
+                # analysis_result contains crawler_summary and methodology_details
                 report_path = self.pdf_generator.generate_report(
-                    crawler_data=crawler_data,
                     analysis_data=analysis_result,
-                    company_name=company_name,
-                    industry=industry,
-                    output_path=pdf_path,
-                    sources=sources
+                    output_filename=f"report_{analysis_id}.pdf"
                 )
                 
                 pdf_duration = (datetime.now() - pdf_start).total_seconds()
