@@ -6,7 +6,7 @@ VERSION 3.1 - QUALITY SCORE + PREMIUM + INTELLIGENT ESTIMATION
 
 Features:
 - Quality Score System (0-200 points)
-- Premium Package Recommendation (â‚¬799/month)
+- Premium Package Recommendation (€799/month)
 - Intelligent room count estimation when crawler returns None
 - Realistic ROI calculations based on room count
 - Chatbot-aware recommendations
@@ -123,7 +123,7 @@ class AIAnalyzer:
         
         sources_text = self._format_sources(sources)
         
-        prompt = f"""Du bist ein Senior Business Analyst fÃ¼r ChatPro AI mit Spezialisierung auf die {industry}-Branche.
+        prompt = f"""Du bist ein Senior Business Analyst für ChatPro AI mit Spezialisierung auf die {industry}-Branche.
 
 VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
 
@@ -132,17 +132,17 @@ VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
 **Auszeichnungen** (0-40):
 - Michelin-Stern: +40
 - Gault Millau: +35
-- Relais & ChÃ¢teaux: +30
+- Relais & Châteaux: +30
 - 5 Sterne: +30
 
 **Preisniveau** (0-30):
-- â‰¥â‚¬200/Nacht: +30
-- â‚¬150-199: +25
-- â‚¬120-149: +20
+- ≥€200/Nacht: +30
+- €150-199: +25
+- €120-149: +20
 - "Luxus"/"Premium": +15
 
 **Gastronomie** (0-25):
-- DegustationsmenÃ¼: +15
+- Degustationsmenü: +15
 - Weinkarte: +15
 - Fine Dining: +20
 - Events/Weinproben: +15
@@ -159,63 +159,62 @@ VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
 
 # PAKET-EMPFEHLUNG
 
-**PREMIUM (â‚¬799/Monat)** wenn:
-- Quality Score â‰¥40, ODER
+**PREMIUM (€799/Monat)** wenn:
+- Quality Score ≥40, ODER
 - 3+ Sprachen, ODER
 - Michelin/Gault Millau, ODER
-- Preis >â‚¬120/Nacht
+- Preis >€120/Nacht
 
-**BUSINESS (â‚¬249/Monat)** nur wenn:
+**BUSINESS (€249/Monat)** nur wenn:
 - Score <40, UND
 - Nur 1-2 Sprachen, UND
 - Standard-Hotel
 
-# ZIMMERZAHL-SCHÃ„TZUNG
+# ZIMMERZAHL-SCHÄTZUNG
 
 Falls room_count == None:
 
-IF Score â‰¥80: estimated = 10-20 (Luxury)
+IF Score ≥80: estimated = 10-20 (Luxury)
 ELIF Score 40-79: estimated = 15-30 (Premium)
 ELSE: estimated = 50-80 (Standard)
 
 # ROI-BERECHNUNG
 
 **Premium-Hotel:**
-- Mehrsprachigkeit: rooms Ã— 30 Ã— 0.75 Ã— price Ã— 0.10
-- Direktbuchungen: revenue Ã— 0.05 Ã— 0.15
-- Upselling: rooms Ã— 30 Ã— 0.70 Ã— 30â‚¬
-- Staff Saved: 20-30h Ã— 25â‚¬ Ã— 4
+- Mehrsprachigkeit: rooms × 30 × 0.75 × price × 0.10
+- Direktbuchungen: revenue × 0.05 × 0.15
+- Upselling: rooms × 30 × 0.70 × 30€
+- Staff Saved: 20-30h × 25€ × 4
 
 **KONSERVATIV:**
 - Belegung: 70-85%
 - Uplift: 5-12%
-- ROI: Premium â‚¬2.500-5.000, Business â‚¬800-1.500
+- ROI: Premium €2.500-5.000, Business €800-1.500
 
 # CHATBOT-AWARE
 
 IF has_chatbot:
   Recommendation: "Upgrade auf Premium"
-  Setup: â‚¬500-1.000
+  Setup: €500-1.000
 ELSE:
-  Recommendation: "EinfÃ¼hrung Chatbot"
-  Setup: â‚¬1.799 (Business) / â‚¬4.999 (Premium)
+  Recommendation: "Einführung Chatbot"
+  Setup: €1.799 (Business) / €4.999 (Premium)
 
 # PACKAGE DETAILS
 
 **PREMIUM:**
-- Setup: â‚¬4.999
-- Monthly: â‚¬799
+- Setup: €4.999
+- Monthly: €799
 - Features: 50+ Sprachen, PMS, Account Manager
 
 **BUSINESS:**
-- Setup: â‚¬1.799
-- Monthly: â‚¬249
+- Setup: €1.799
+- Monthly: €249
 - Features: 2 Sprachen, Basic Integration
 
 # QUELLEN
 
 {sources_text}
-
 
 # CHATBOT PRIORITY
 
@@ -224,14 +223,14 @@ Ein Chatbot ist eine kritische Grundfunktion für moderne Hotels und sollte höc
 
 Falls Chatbot bereits vorhanden: chatbot_priority = MEDIUM (Optimierung bestehender Systeme)
 
-Erstelle jetzt die vollstÃ¤ndige Analyse auf DEUTSCH!
+Erstelle jetzt die vollständige Analyse auf DEUTSCH!
 """
         return prompt
     
     def _format_sources(self, sources: List[Dict]) -> str:
         """Format sources for prompt"""
         if not sources:
-            return "Keine Quellen verfÃ¼gbar."
+            return "Keine Quellen verfügbar."
         
         formatted = []
         for i, source in enumerate(sources, 1):
@@ -269,7 +268,7 @@ Erstelle jetzt die vollstÃ¤ndige Analyse auf DEUTSCH!
             user_msg += f"- Languages: {crawler_data.get('languages', [])}\n\n"
             user_msg += "**AUFGABE:**\n"
             user_msg += "1. Berechne Quality Score\n"
-            user_msg += "2. SchÃ¤tze room_count falls None\n"
+            user_msg += "2. Schätze room_count falls None\n"
             user_msg += "3. Empfehle PREMIUM wenn Score >=40\n"
             user_msg += "4. Berechne ROI\n"
             user_msg += "5. DEUTSCH!\n\n"
@@ -291,11 +290,11 @@ Erstelle jetzt die vollstÃ¤ndige Analyse auf DEUTSCH!
             if not result:
                 raise ValueError("No structured output received")
             
-            logger.info(f"âœ… Analysis complete!")
+            logger.info(f"✅ Analysis complete!")
             logger.info(f"   Package: {result.recommended_package}")
             logger.info(f"   Quality Score: {result.quality_score}")
             logger.info(f"   Room Count: {result.estimated_room_count} ({result.room_count_method})")
-            logger.info(f"   ROI: â‚¬{result.roi_calculation.monthly_roi_euro:,}")
+            logger.info(f"   ROI: €{result.roi_calculation.monthly_roi_euro:,}")
             
             return result.model_dump()
             
@@ -314,8 +313,8 @@ if __name__ == "__main__":
     async def test():
         test_data = {
             "url": "https://engel-sasbachwalden.de/",
-            "title": "Der Engel Sasbachwalden â€“ GenieÃŸen zwischen Himmel und Erde seit 1764",
-            "meta_description": "Michelin-Restaurant, DegustationsmenÃ¼, Weinproben, Events",
+            "title": "Der Engel Sasbachwalden – Genießen zwischen Himmel und Erde seit 1764",
+            "meta_description": "Michelin-Restaurant, Degustationsmenü, Weinproben, Events",
             "has_chatbot": False,
             "chatbot_type": None,
             "room_count": None,
@@ -341,14 +340,14 @@ if __name__ == "__main__":
             sources=sources
         )
         
-        print(f"\nâœ… Results:")
+        print(f"\n✅ Results:")
         print(f"   Package: {result['recommended_package']}")
-        print(f"   Setup: â‚¬{result['package_details']['setup_cost_euro']:,}")
-        print(f"   Monthly: â‚¬{result['package_details']['monthly_cost_euro']:,}")
+        print(f"   Setup: €{result['package_details']['setup_cost_euro']:,}")
+        print(f"   Monthly: €{result['package_details']['monthly_cost_euro']:,}")
         print(f"   Quality Score: {result['quality_score']}/200")
         print(f"   Room Method: {result['room_count_method']}")
         print(f"   Rooms: {result['estimated_room_count']}")
-        print(f"   ROI: â‚¬{result['roi_calculation']['monthly_roi_euro']:,}")
+        print(f"   ROI: €{result['roi_calculation']['monthly_roi_euro']:,}")
         print(f"   Multiplier: {result['roi_calculation']['roi_multiplier']}x")
         print(f"   Break-Even: {result['roi_calculation']['break_even_months']} Mon")
     
