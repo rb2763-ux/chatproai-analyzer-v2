@@ -21,53 +21,7 @@ logger = logging.getLogger(__name__)
 
 class WebsiteCrawler:
     """
-
-
-    # ============================================================================
-    # DNS Fallback - Added by V3.1.1-FIXED
-    # ============================================================================
-    
-    async def crawl(self, url: str) -> Dict:
-        from urllib.parse import urlparse
-        
-        urls_to_try = [url]
-        parsed = urlparse(url)
-        domain = parsed.netloc
-        
-        if domain.startswith("www."):
-            non_www_url = url.replace(f"://{domain}", f"://{domain[4:]}")
-            urls_to_try.append(non_www_url)
-        else:
-            www_url = url.replace(f"://{domain}", f"://www.{domain}")
-            urls_to_try.append(www_url)
-        
-        last_error = None
-        
-        for attempt_idx, attempt_url in enumerate(urls_to_try):
-            try:
-                logger.info(f"Crawl attempt {attempt_idx + 1}/{len(urls_to_try)}: {attempt_url}")
-                result = await self._crawl_internal(attempt_url)
-                logger.info(f"? Successfully crawled {attempt_url}")
-                return result
-            except Exception as e:
-                logger.warning(f"?? Failed to crawl {attempt_url}: {str(e)}")
-                last_error = e
-                continue
-        
-        error_msg = f"Could not crawl URL after trying {len(urls_to_try)} variants"
-        logger.error(f"? {error_msg}")
-        
-        return {
-            "total_pages_crawled": 0,
-            "chatbot_detected": False,
-            "chatbot_provider": None,
-            "room_count": None,
-            "languages_detected": [],
-            "key_features": [],
-            "error": str(last_error)
-        }
-    
-    async def _crawl_internal(self, url: str) -> Dict:    Lightweight website crawler using requests + BeautifulSoup
+    Lightweight website crawler using requests + BeautifulSoup
 
     Features:
     - STRICT Chatbot detection (nur Widget-Scripts, keine Text-Erwähnungen)
@@ -120,7 +74,7 @@ class WebsiteCrawler:
             "/our-house"
         ]
 
-    async def _crawl_internal(self, url: str) -> Dict:
+    async def crawl(self, url: str) -> Dict:
         """
         Main crawl method with multi-page support
 
@@ -581,4 +535,3 @@ if __name__ == "__main__":
             print(f"      - Signature: {result['chatbot_details'].get('signature_found')}")
     
     asyncio.run(test())
-
