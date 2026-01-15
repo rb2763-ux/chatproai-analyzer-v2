@@ -10,6 +10,51 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
 
+
+
+# ============================================================================
+# OpenAI Retry Logic - Added by V3.1.1-FIXED
+# ============================================================================
+
+async def call_openai_with_retry(
+    client,
+    messages: list,
+    model: str = "gpt-4",
+    max_retries: int = 5,
+    base_delay: float = 2.0,
+    max_delay: float = 60.0,
+    timeout: float = 90.0
+):
+    import asyncio
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries}")
+            
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.1,
+                timeout=timeout
+            )
+            
+            logger.info(f"? OpenAI API call succeeded on attempt {attempt + 1}")
+            return response
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.warning(f"?? OpenAI API call failed on attempt {attempt + 1}: {error_msg}")
+            
+            if attempt == max_retries - 1:
+                logger.error(f"? OpenAI API failed after {max_retries} attempts")
+                raise Exception(f"OpenAI API failed after {max_retries} attempts. Last error: {error_msg}")
+            
+            delay = min(base_delay * (2 ** attempt), max_delay)
+            logger.info(f"? Retrying in {delay:.1f} seconds...")
+            await asyncio.sleep(delay)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

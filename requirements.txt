@@ -1,35 +1,32 @@
-# ChatPro AI Backend - Requirements
-# Production-Ready Python Dependencies
+# ChatPro AI Analyzer - Requirements
+# Version: 3.1.1-FIXED
 
 # Core Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+python-multipart>=0.0.6
 
-# Pydantic for data validation
-pydantic==2.5.3
-pydantic-settings==2.1.0
-email-validator==2.1.0
-
-# OpenAI API
-openai>=1.51.0
+# HTTP & Async
+httpx>=0.25.0
+aiohttp>=3.9.0
+aiofiles>=23.2.0
 
 # Web Scraping
-beautifulsoup4==4.12.3
-lxml==5.1.0
-requests==2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+requests>=2.31.0
+
+# AI / LLM
+openai>=1.3.0
+
+# PDF Generation
+reportlab>=4.0.0
+Pillow>=10.1.0
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
+tenacity>=8.2.0
 
-# Production server
-gunicorn==21.2.0
-
-# PDF Generation (REPORTLAB - No system dependencies!)
-reportlab==4.0.9
-Pillow==10.2.0
-
-# Brevo CRM Integration
-sib-api-v3-sdk==7.6.0
-
-httpx==0.24.1
+# Async
+asyncio>=3.4.3
