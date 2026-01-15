@@ -1,371 +1,355 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-ChatPro AI V3.1.1 - Hybrid Architecture Business Analyzer
-Author: ChatPro Team
-Version: 3.1.1-FIXED (Nested Pydantic Models)
+ChatPro AI - Business Analyzer
+VERSION 3.1 - QUALITY SCORE + PREMIUM + INTELLIGENT ESTIMATION
+
+Features:
+- Quality Score System (0-200 points)
+- Premium Package Recommendation (€799/month)
+- Intelligent room count estimation when crawler returns None
+- Realistic ROI calculations based on room count
+- Chatbot-aware recommendations
+- 100% German output
 """
 
 import os
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
-from openai import AsyncOpenAI
-
-
-
-# ============================================================================
-# OpenAI Retry Logic - Added by V3.1.1-FIXED
-# ============================================================================
-
-async def call_openai_with_retry(
-    client,
-    messages: list,
-    model: str = "gpt-4",
-    max_retries: int = 5,
-    base_delay: float = 2.0,
-    max_delay: float = 60.0,
-    timeout: float = 90.0
-):
-    import asyncio
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries}")
-            
-            response = await client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.1,
-                timeout=timeout
-            )
-            
-            logger.info(f"? OpenAI API call succeeded on attempt {attempt + 1}")
-            return response
-            
-        except Exception as e:
-            error_msg = str(e)
-            logger.warning(f"?? OpenAI API call failed on attempt {attempt + 1}: {error_msg}")
-            
-            if attempt == max_retries - 1:
-                logger.error(f"? OpenAI API failed after {max_retries} attempts")
-                raise Exception(f"OpenAI API failed after {max_retries} attempts. Last error: {error_msg}")
-            
-            delay = min(base_delay * (2 ** attempt), max_delay)
-            logger.info(f"? Retrying in {delay:.1f} seconds...")
-            await asyncio.sleep(delay)
+from openai import OpenAI
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
 # ============================================================================
-# NESTED PYDANTIC MODELS - STRUCTURAL FIX
+# PYDANTIC MODELS FOR STRUCTURED OUTPUT
 # ============================================================================
 
-class CompanyOverview(BaseModel):
-    """Nested model for company overview data"""
-    company_name: str = Field(description="Official company name")
-    industry: str = Field(description="Primary industry/sector")
-    website_url: str = Field(description="Main website URL")
-    description: Optional[str] = Field(default="", description="Brief company description")
+class PainPoint(BaseModel):
+    """Pain point model"""
+    title: str = Field(description="Pain point title in German")
+    category: str = Field(description="Category: Technology, Marketing, Customer Experience, Operations")
+    description: str = Field(description="Detailed description in German")
+    business_impact: str = Field(description="Business impact description in German")
+    evidence: str = Field(description="Evidence from website analysis in German")
+    priority: str = Field(description="Priority: HIGH, MEDIUM, LOW")
 
 
-class ChatbotCapabilities(BaseModel):
-    """Nested model for chatbot capabilities"""
-    chatbot_detected: bool = Field(description="Whether a chatbot/live chat was detected")
-    chatbot_type: Optional[str] = Field(default=None, description="Type of chatbot (rule-based, AI-powered, etc.)")
-    features: List[str] = Field(default_factory=list, description="List of chatbot features")
-    integration_quality: Optional[str] = Field(default=None, description="Integration quality assessment")
+class Recommendation(BaseModel):
+    """Recommendation model"""
+    title: str = Field(description="Recommendation title in German")
+    description: str = Field(description="Detailed description in German")
+    business_value: str = Field(description="Business value in German")
+    implementation_effort: str = Field(description="Implementation effort in German")
+    priority: str = Field(description="Priority: HIGH, MEDIUM, LOW")
+    quick_win: bool = Field(description="Whether this is a quick win")
 
 
-class QualityScore(BaseModel):
-    """Nested model for quality score breakdown"""
-    total_score: int = Field(description="Total quality score (0-200)")
-    website_quality: int = Field(description="Website quality score (0-50)")
-    content_depth: int = Field(description="Content depth score (0-50)")
-    technical_setup: int = Field(description="Technical setup score (0-50)")
-    user_experience: int = Field(description="User experience score (0-50)")
+class PackageDetails(BaseModel):
+    """Package details model"""
+    name: str = Field(description="PREMIUM or BUSINESS")
+    setup_cost_euro: int = Field(description="Setup cost in EUR")
+    monthly_cost_euro: int = Field(description="Monthly cost in EUR")
+    features: List[str] = Field(description="List of key features in German")
+    why_this_package: str = Field(description="Explanation why this package was recommended in German")
 
 
-class ROIEstimate(BaseModel):
-    """Nested model for ROI estimation"""
-    estimated_monthly_roi: str = Field(description="Estimated monthly ROI range (e.g., '€2,500 - €5,000')")
-    calculation_method: str = Field(description="Brief explanation of ROI calculation methodology")
-    assumptions: List[str] = Field(default_factory=list, description="Key assumptions for ROI estimate")
-
-
-class CrawlerSummary(BaseModel):
-    """Nested model for crawler analysis summary"""
-    total_pages_crawled: int = Field(description="Number of pages crawled")
-    chatbot_status: str = Field(description="Chatbot detection status")
-    room_count: Optional[int] = Field(default=None, description="Number of rooms detected (for hotels)")
-    languages_detected: List[str] = Field(default_factory=list, description="Languages found on website")
-    key_features: List[str] = Field(default_factory=list, description="Key website features detected")
-
-
-class MethodologyDetails(BaseModel):
-    """Nested model for methodology and data sources"""
-    data_sources: List[str] = Field(description="List of data sources used in analysis")
-    roi_calculation_method: str = Field(description="Detailed ROI calculation methodology")
-    quality_score_breakdown: str = Field(description="Explanation of quality score components")
-    conservative_assumptions: List[str] = Field(description="List of conservative assumptions made")
+class ROICalculation(BaseModel):
+    """ROI calculation model"""
+    monthly_roi_euro: int = Field(description="Monthly ROI in EUR")
+    roi_multiplier: float = Field(description="ROI multiplier (e.g., 3.5x)")
+    break_even_months: float = Field(description="Break-even period in months")
+    formula_explanation: str = Field(description="How ROI was calculated in German")
+    assumptions: List[str] = Field(description="List of assumptions in German")
+    sources_used: List[int] = Field(description="List of source IDs used (1-14)")
 
 
 class AnalysisResult(BaseModel):
-    """
-    Main Pydantic model for ChatPro AI analysis results.
-    Uses nested models for type safety and validation.
-    """
-    company_overview: CompanyOverview
-    chatbot_capabilities: ChatbotCapabilities
-    quality_score: QualityScore
-    roi_estimate: ROIEstimate
-    recommended_package: str = Field(description="PREMIUM, BUSINESS, or BASIC package recommendation")
-    key_benefits: List[str] = Field(description="List of 3-5 key benefits from ChatPro AI implementation")
-    implementation_roadmap: List[str] = Field(description="3-5 step implementation roadmap")
-    competitive_advantages: List[str] = Field(description="List of competitive advantages")
-    crawler_summary: CrawlerSummary
-    methodology_details: MethodologyDetails
-
-
-# ============================================================================
-# ANALYZER CLASS
-# ============================================================================
-
-class ChatProAnalyzer:
-    """
-    ChatPro AI V3.1.1 Business Analyzer with Hybrid Architecture
+    """Complete analysis result"""
+    executive_summary: str = Field(description="Executive summary in German")
+    company_overview: str = Field(description="Company overview in German")
+    methodology: str = Field(description="Analysis methodology in German")
     
-    Features:
-    - Nested Pydantic models for type safety
-    - Transparency features (crawler summary + methodology)
-    - Conservative ROI estimation
-    - Quality score system (0-200 points)
+    # NEW V3.1 FIELDS
+    recommended_package: str = Field(description="PREMIUM or BUSINESS")
+    package_details: PackageDetails = Field(description="Package details")
+    quality_score: int = Field(description="Quality score 0-200")
+    quality_indicators: List[str] = Field(description="List of quality indicators found")
+    estimated_room_count: Optional[int] = Field(description="Estimated room count if not found by crawler")
+    room_count_method: str = Field(description="How room count was determined: crawler, estimated, or unknown")
+    
+    pain_points: List[PainPoint] = Field(description="3-7 pain points", min_length=3, max_length=7)
+    recommendations: List[Recommendation] = Field(description="3-7 recommendations", min_length=3, max_length=7)
+    roi_calculation: ROICalculation = Field(description="ROI calculation")
+    chatbot_priority: str = Field(description="HIGH, MEDIUM, or LOW")
+    key_findings: List[str] = Field(description="3-5 key findings", min_length=3, max_length=5)
+    next_steps: List[str] = Field(description="3-5 next steps", min_length=3, max_length=5)
+    upsell_note: Optional[str] = Field(description="Optional upsell note if Business package recommended")
+
+
+# ============================================================================
+# AI ANALYZER CLASS
+# ============================================================================
+
+class AIAnalyzer:
+    """
+    AI-powered business analyzer using OpenAI with structured outputs
+    
+    Version: 3.1
+    - Quality Score System
+    - Premium Package Recommendation
+    - Intelligent Room Count Estimation
     """
     
     def __init__(self):
-        self.model = "gpt-4o-mini"
-        self.max_tokens = 4000
+        """Initialize analyzer with OpenAI client"""
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable not set")
+        
+        self.client = OpenAI(api_key=api_key)
+        self.model = "gpt-4o-2024-08-06"  # Supports structured outputs
+        
+        logger.info(f"AIAnalyzer initialized with model: {self.model}")
     
-    async def analyze(self, crawler_results: Dict) -> Dict:
-        """
-        Analyze crawler results and generate business recommendations.
+    def _build_system_prompt(self, industry: str, sources: List[Dict]) -> str:
+        """Build comprehensive system prompt with V3.1 enhancements"""
         
-        Args:
-            crawler_results: Dictionary containing crawler data
+        sources_text = self._format_sources(sources)
         
-        Returns:
-            Dictionary containing validated analysis results
-        """
-        logger.info("Starting ChatPro AI V3.1.1 analysis...")
+        prompt = f"""Du bist ein Senior Business Analyst für ChatPro AI mit Spezialisierung auf die {industry}-Branche.
+
+VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
+
+# QUALITY SCORE SYSTEM (0-200 PUNKTE)
+
+**Auszeichnungen** (0-40):
+- Michelin-Stern: +40
+- Gault Millau: +35
+- Relais & Châteaux: +30
+- 5 Sterne: +30
+
+**Preisniveau** (0-30):
+- ≥€200/Nacht: +30
+- €150-199: +25
+- €120-149: +20
+- "Luxus"/"Premium": +15
+
+**Gastronomie** (0-25):
+- Degustationsmenü: +15
+- Weinkarte: +15
+- Fine Dining: +20
+- Events/Weinproben: +15
+
+**International** (0-30):
+- 3+ Sprachen: +30
+- 2 Sprachen: +15
+- "International guests": +25
+
+**Zusatzleistungen** (0-25):
+- Spa/Wellness: +15
+- Concierge: +15
+- VIP-Service: +20
+
+# PAKET-EMPFEHLUNG
+
+**PREMIUM (€799/Monat)** wenn:
+- Quality Score ≥40, ODER
+- 3+ Sprachen, ODER
+- Michelin/Gault Millau, ODER
+- Preis >€120/Nacht
+
+**BUSINESS (€249/Monat)** nur wenn:
+- Score <40, UND
+- Nur 1-2 Sprachen, UND
+- Standard-Hotel
+
+# ZIMMERZAHL-SCHÄTZUNG
+
+Falls room_count == None:
+
+IF Score ≥80: estimated = 10-20 (Luxury)
+ELIF Score 40-79: estimated = 15-30 (Premium)
+ELSE: estimated = 50-80 (Standard)
+
+# ROI-BERECHNUNG
+
+**Premium-Hotel:**
+- Mehrsprachigkeit: rooms × 30 × 0.75 × price × 0.10
+- Direktbuchungen: revenue × 0.05 × 0.15
+- Upselling: rooms × 30 × 0.70 × 30€
+- Staff Saved: 20-30h × 25€ × 4
+
+**KONSERVATIV:**
+- Belegung: 70-85%
+- Uplift: 5-12%
+- ROI: Premium €2.500-5.000, Business €800-1.500
+
+# CHATBOT-AWARE
+
+IF has_chatbot:
+  Recommendation: "Upgrade auf Premium"
+  Setup: €500-1.000
+ELSE:
+  Recommendation: "Einführung Chatbot"
+  Setup: €1.799 (Business) / €4.999 (Premium)
+
+# PACKAGE DETAILS
+
+**PREMIUM:**
+- Setup: €4.999
+- Monthly: €799
+- Features: 50+ Sprachen, PMS, Account Manager
+
+**BUSINESS:**
+- Setup: €1.799
+- Monthly: €249
+- Features: 2 Sprachen, Basic Integration
+
+# QUELLEN
+
+{sources_text}
+
+
+# CHATBOT PRIORITY
+
+WICHTIG: Setze chatbot_priority auf HIGH wenn kein Chatbot erkannt wurde!
+Ein Chatbot ist eine kritische Grundfunktion f�r moderne Hotels und sollte h�chste Priorit�t haben.
+
+Falls Chatbot bereits vorhanden: chatbot_priority = MEDIUM (Optimierung bestehender Systeme)
+
+Erstelle jetzt die vollständige Analyse auf DEUTSCH!
+"""
+        return prompt
+    
+    def _format_sources(self, sources: List[Dict]) -> str:
+        """Format sources for prompt"""
+        if not sources:
+            return "Keine Quellen verfügbar."
         
-        # Extract key data from crawler results
-        base_url = crawler_results.get('base_url', 'Unknown')
-        total_pages = len(crawler_results.get('crawled_pages', []))
-        chatbot_detected = crawler_results.get('chatbot_detected', False)
-        chatbot_details = crawler_results.get('chatbot_details', {})
+        formatted = []
+        for i, source in enumerate(sources, 1):
+            formatted.append(f"{i}. {source.get('title', 'Unbekannt')} - {source.get('url', 'N/A')}")
         
-        logger.info(f"Analyzing {base_url} - {total_pages} pages crawled, Chatbot: {chatbot_detected}")
-        
-        # Build system prompt with EXPLICIT nested structure requirements
-        system_prompt = self._build_system_prompt()
-        
-        # Build user prompt with crawler data
-        user_prompt = self._build_user_prompt(crawler_results)
+        return "\n".join(formatted)
+    
+    async def analyze(
+        self,
+        crawler_data: Dict,
+        industry: str,
+        company_name: str,
+        sources: List[Dict]
+    ) -> Dict:
+        """Analyze website and generate structured report"""
         
         try:
-            # Call OpenAI with structured output (Pydantic model)
-            response = await client.beta.chat.completions.parse(
+            logger.info(f"Starting analysis for {company_name} ({industry})")
+            logger.info(f"Crawler: has_chatbot={crawler_data.get('has_chatbot')}, room_count={crawler_data.get('room_count')}")
+            
+            system_prompt = self._build_system_prompt(industry, sources)
+            
+            # Build user message using string concatenation
+            user_msg = "Analysiere diese Website:\n\n"
+            user_msg += f"**UNTERNEHMEN:** {company_name}\n"
+            user_msg += f"**BRANCHE:** {industry}\n\n"
+            user_msg += "**CRAWLER-DATEN:**\n"
+            user_msg += f"- URL: {crawler_data.get('url', 'N/A')}\n"
+            user_msg += f"- Title: {crawler_data.get('title', 'N/A')}\n"
+            user_msg += f"- Description: {crawler_data.get('meta_description', 'N/A')}\n"
+            user_msg += f"- Has Chatbot: {crawler_data.get('has_chatbot', False)}\n"
+            user_msg += f"- Chatbot Type: {crawler_data.get('chatbot_type', 'None')}\n"
+            user_msg += f"- Room Count: {crawler_data.get('room_count', 'None')}\n"
+            user_msg += f"- Mobile: {crawler_data.get('mobile_responsive', False)}\n"
+            user_msg += f"- Languages: {crawler_data.get('languages', [])}\n\n"
+            user_msg += "**AUFGABE:**\n"
+            user_msg += "1. Berechne Quality Score\n"
+            user_msg += "2. Schätze room_count falls None\n"
+            user_msg += "3. Empfehle PREMIUM wenn Score >=40\n"
+            user_msg += "4. Berechne ROI\n"
+            user_msg += "5. DEUTSCH!\n\n"
+            user_msg += "Erstelle die Analyse!"
+            
+            # Call OpenAI with structured output
+            completion = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_msg}
                 ],
                 response_format=AnalysisResult,
-                max_tokens=self.max_tokens
+                temperature=0.7
             )
             
-            # Extract parsed result
-            analysis = response.choices[0].message.parsed
+            result = completion.choices[0].message.parsed
             
-            if analysis is None:
-                raise ValueError("OpenAI returned None for parsed analysis")
+            if not result:
+                raise ValueError("No structured output received")
             
-            # Convert to dictionary for downstream processing
-            result = analysis.model_dump()
+            logger.info(f"✅ Analysis complete!")
+            logger.info(f"   Package: {result.recommended_package}")
+            logger.info(f"   Quality Score: {result.quality_score}")
+            logger.info(f"   Room Count: {result.estimated_room_count} ({result.room_count_method})")
+            logger.info(f"   ROI: €{result.roi_calculation.monthly_roi_euro:,}")
             
-            # Log success metrics
-            package = result.get('recommended_package', 'UNKNOWN')
-            quality_score = result.get('quality_score', {}).get('total_score', 0)
-            roi = result.get('roi_estimate', {}).get('estimated_monthly_roi', 'N/A')
-            
-            logger.info(f"✅ Analysis complete! Package: {package}, Quality Score: {quality_score}, ROI: {roi}")
-            
-            return result
+            return result.model_dump()
             
         except Exception as e:
-            logger.error(f"❌ Analysis failed: {str(e)}")
+            logger.error(f"Analysis failed: {str(e)}")
             raise
-    
-    def _build_system_prompt(self) -> str:
-        """Build system prompt with McKinsey/BCG best practices"""
-        return """You are a senior business analyst from McKinsey/BCG specializing in hospitality and AI implementation.
-
-**CRITICAL: Follow the EXACT nested structure of the Pydantic models!**
-
-Your analysis must be:
-1. **Data-driven**: Base recommendations on crawler data
-2. **Conservative**: Use realistic, lower-bound ROI estimates
-3. **Transparent**: Explain methodology and assumptions
-4. **Actionable**: Provide concrete implementation steps
-
-**Package Pricing (use for ROI calculations):**
-- PREMIUM: €2,500 - €5,000/month (50+ rooms, high-end hotels)
-- BUSINESS: €800 - €1,500/month (20-50 rooms, mid-market)
-- BASIC: €300 - €600/month (<20 rooms, budget properties)
-
-**Quality Score System (0-200 points):**
-- Website Quality (0-50): Design, mobile responsiveness, loading speed
-- Content Depth (0-50): Information completeness, language support
-- Technical Setup (0-50): Chatbot integration, booking system, SEO
-- User Experience (0-50): Navigation, accessibility, conversion optimization
-
-**Conservative ROI Assumptions:**
-- Conversion rate improvement: 15-25% (industry benchmark: 20-40%)
-- Average booking value: Use property-specific data or €150-300
-- Response time reduction: 80% (24h → <5min)
-- Staff time savings: 10-20 hours/week
-
-**METHODOLOGY TRANSPARENCY:**
-Always explain:
-- Which data sources were used
-- How ROI was calculated
-- Why assumptions are conservative
-- What Quality Score components contributed
-
-**NESTED STRUCTURE EXAMPLE:**
-```json
-{
-  "company_overview": {
-    "company_name": "Hotel Engel",
-    "industry": "Hospitality",
-    "website_url": "https://example.com",
-    "description": "Boutique hotel..."
-  },
-  "quality_score": {
-    "total_score": 140,
-    "website_quality": 35,
-    "content_depth": 40,
-    "technical_setup": 30,
-    "user_experience": 35
-  }
-}
-```
-
-Use the Pyramid Principle: Start with conclusion, then provide supporting evidence."""
-    
-    def _build_user_prompt(self, crawler_results: Dict) -> str:
-        """Build user prompt with crawler data"""
-        base_url = crawler_results.get('base_url', 'Unknown')
-        total_pages = len(crawler_results.get('crawled_pages', []))
-        chatbot_detected = crawler_results.get('chatbot_detected', False)
-        chatbot_details = crawler_results.get('chatbot_details', {})
-        
-        # Extract key features from crawled pages
-        crawled_pages = crawler_results.get('crawled_pages', [])
-        languages = set()
-        room_count = None
-        features = []
-        
-        for page in crawled_pages:
-            if page.get('language'):
-                languages.add(page['language'])
-            
-            # Try to detect room count
-            content = page.get('content', '').lower()
-            if 'zimmer' in content or 'rooms' in content:
-                import re
-                numbers = re.findall(r'\b(\d{1,3})\s*(?:zimmer|rooms?)\b', content)
-                if numbers:
-                    room_count = int(numbers[0])
-        
-        prompt = f"""Analyze the following website and provide a comprehensive business analysis with ChatPro AI recommendations.
-
-**Website Data:**
-- URL: {base_url}
-- Pages Crawled: {total_pages}
-- Chatbot Detected: {chatbot_detected}
-- Languages: {list(languages) if languages else ['German']}
-- Estimated Room Count: {room_count if room_count else 'Not detected'}
-
-**Chatbot Details:**
-{chatbot_details if chatbot_details else 'No chatbot detected'}
-
-**Your Task:**
-1. Analyze the website quality and business potential
-2. Calculate a realistic Quality Score (0-200)
-3. Estimate CONSERVATIVE monthly ROI based on:
-   - Property size (room count)
-   - Current chatbot capabilities
-   - Industry benchmarks
-4. Recommend appropriate ChatPro AI package
-5. Provide actionable implementation roadmap
-
-**Crawler Summary Section:**
-Populate crawler_summary with:
-- total_pages_crawled: {total_pages}
-- chatbot_status: "{'Detected' if chatbot_detected else 'Not detected'}"
-- room_count: {room_count if room_count else 'null'}
-- languages_detected: {list(languages) if languages else ['de']}
-- key_features: List 3-5 key features you identified
-
-**Methodology Section:**
-Populate methodology_details with:
-- data_sources: ["Website crawler analysis", "Industry benchmarks 2024", "Hospitality conversion data"]
-- roi_calculation_method: Explain your ROI calculation step-by-step
-- quality_score_breakdown: Explain how you scored each component (0-50 points)
-- conservative_assumptions: List assumptions and why they're conservative
-
-Remember: Use NESTED structures for all models! Be conservative with ROI, transparent with methodology."""
-        
-        return prompt
 
 
 # ============================================================================
-# STANDALONE TESTING
+# TEST
 # ============================================================================
-
-async def test():
-    """Test function for local development"""
-    # Mock crawler results
-    mock_results = {
-        'base_url': 'https://www.hotel-engel-sasbachwalden.de',
-        'crawled_pages': [
-            {'url': 'https://www.hotel-engel-sasbachwalden.de/', 'language': 'de'},
-            {'url': 'https://www.hotel-engel-sasbachwalden.de/zimmer', 'language': 'de', 'content': '25 Zimmer verfügbar'}
-        ],
-        'chatbot_detected': False,
-        'chatbot_details': {}
-    }
-    
-    analyzer = ChatProAnalyzer()
-    result = await analyzer.analyze(mock_results)
-    
-    print("\n" + "="*80)
-    print("ANALYSIS RESULT")
-    print("="*80)
-    print(f"Company: {result['company_overview']['company_name']}")
-    print(f"Package: {result['recommended_package']}")
-    print(f"Quality Score: {result['quality_score']['total_score']}/200")
-    print(f"ROI: {result['roi_estimate']['estimated_monthly_roi']}")
-    print("="*80)
-
 
 if __name__ == "__main__":
     import asyncio
+    
+    async def test():
+        test_data = {
+            "url": "https://engel-sasbachwalden.de/",
+            "title": "Der Engel Sasbachwalden – Genießen zwischen Himmel und Erde seit 1764",
+            "meta_description": "Michelin-Restaurant, Degustationsmenü, Weinproben, Events",
+            "has_chatbot": False,
+            "chatbot_type": None,
+            "room_count": None,
+            "mobile_responsive": True,
+            "languages": ["de"]
+        }
+        
+        sources = [
+            {"title": "Vynta AI Study", "url": "https://vynta.ai"},
+            {"title": "AirDNA Study", "url": "https://airdna.co"}
+        ]
+        
+        analyzer = AIAnalyzer()
+        
+        print("\n" + "="*80)
+        print("ANALYZER V3.1 TEST")
+        print("="*80)
+        
+        result = await analyzer.analyze(
+            crawler_data=test_data,
+            industry="hotel",
+            company_name="Hotel Engel Sasbachwalden",
+            sources=sources
+        )
+        
+        print(f"\n✅ Results:")
+        print(f"   Package: {result['recommended_package']}")
+        print(f"   Setup: €{result['package_details']['setup_cost_euro']:,}")
+        print(f"   Monthly: €{result['package_details']['monthly_cost_euro']:,}")
+        print(f"   Quality Score: {result['quality_score']}/200")
+        print(f"   Room Method: {result['room_count_method']}")
+        print(f"   Rooms: {result['estimated_room_count']}")
+        print(f"   ROI: €{result['roi_calculation']['monthly_roi_euro']:,}")
+        print(f"   Multiplier: {result['roi_calculation']['roi_multiplier']}x")
+        print(f"   Break-Even: {result['roi_calculation']['break_even_months']} Mon")
+    
     asyncio.run(test())
