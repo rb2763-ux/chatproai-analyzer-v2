@@ -124,6 +124,35 @@ def register_unicode_fonts():
 FONTS_REGISTERED = register_unicode_fonts()
 
 
+
+def get_font_name(style='normal'):
+    """
+    Get appropriate font name based on availability.
+    Returns DejaVu Sans if registered, otherwise Helvetica.
+    
+    Args:
+        style: 'normal', 'bold', 'italic', or 'bolditalic'
+    
+    Returns:
+        str: Font name to use
+    """
+    if FONTS_REGISTERED:
+        font_map = {
+            'normal': 'DejaVuSans',
+            'bold': 'DejaVuSans-Bold',
+            'italic': 'DejaVuSans-Oblique',
+            'bolditalic': 'DejaVuSans-BoldOblique'
+        }
+        return font_map.get(style, 'DejaVuSans')
+    else:
+        # Fallback to Helvetica
+        font_map = {
+            'normal': 'Helvetica',
+            'bold': 'Helvetica-Bold',
+            'italic': 'Helvetica-Oblique',
+            'bolditalic': 'Helvetica-BoldOblique'
+        }
+        return font_map.get(style, 'Helvetica')
 class NumberedCanvas(canvas.Canvas):
     """Custom canvas with professional headers and footers"""
     
@@ -205,7 +234,7 @@ class PDFReportGenerator:
             'CoverTitle': ParagraphStyle(
                 'CoverTitle',
                 parent=base_styles['Heading1'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=32,
                 textColor=GRAY_DARK,
                 spaceAfter=12,
@@ -215,7 +244,7 @@ class PDFReportGenerator:
             'CoverSubtitle': ParagraphStyle(
                 'CoverSubtitle',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=18,
                 textColor=PRIMARY_COLOR,
                 spaceAfter=24,
@@ -225,7 +254,7 @@ class PDFReportGenerator:
             'CoverCompany': ParagraphStyle(
                 'CoverCompany',
                 parent=base_styles['Normal'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=24,
                 textColor=GRAY_DARK,
                 spaceAfter=8,
@@ -235,7 +264,7 @@ class PDFReportGenerator:
             'CoverMeta': ParagraphStyle(
                 'CoverMeta',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=12,
                 textColor=GRAY_MEDIUM,
                 spaceAfter=6,
@@ -247,7 +276,7 @@ class PDFReportGenerator:
             'Heading1': ParagraphStyle(
                 'CustomHeading1',
                 parent=base_styles['Heading1'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=16,
                 textColor=GRAY_DARK,
                 spaceAfter=12,
@@ -257,7 +286,7 @@ class PDFReportGenerator:
             'Heading2': ParagraphStyle(
                 'CustomHeading2',
                 parent=base_styles['Heading2'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=12,
                 textColor=GRAY_DARK,
                 spaceAfter=8,
@@ -267,7 +296,7 @@ class PDFReportGenerator:
             'Heading3': ParagraphStyle(
                 'CustomHeading3',
                 parent=base_styles['Heading3'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=12,
                 textColor=PRIMARY_COLOR,
                 spaceAfter=6,
@@ -279,7 +308,7 @@ class PDFReportGenerator:
             'BodyText': ParagraphStyle(
                 'CustomBodyText',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=10,
                 textColor=GRAY_DARK,
                 spaceAfter=8,
@@ -289,7 +318,7 @@ class PDFReportGenerator:
             'BodyTextIndent': ParagraphStyle(
                 'BodyTextIndent',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=10,
                 textColor=GRAY_DARK,
                 spaceAfter=6,
@@ -302,7 +331,7 @@ class PDFReportGenerator:
             'Highlight': ParagraphStyle(
                 'Highlight',
                 parent=base_styles['Normal'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=12,
                 textColor=PRIMARY_COLOR,
                 spaceAfter=10,
@@ -311,7 +340,7 @@ class PDFReportGenerator:
             'MetricValue': ParagraphStyle(
                 'MetricValue',
                 parent=base_styles['Normal'],
-                fontName='Helvetica-Bold',
+                fontName=get_font_name('bold'),
                 fontSize=24,
                 textColor=SUCCESS_COLOR,
                 spaceAfter=4,
@@ -321,7 +350,7 @@ class PDFReportGenerator:
             'MetricLabel': ParagraphStyle(
                 'MetricLabel',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=10,
                 textColor=GRAY_MEDIUM,
                 spaceAfter=12,
@@ -331,7 +360,7 @@ class PDFReportGenerator:
             'BulletPoint': ParagraphStyle(
                 'BulletPoint',
                 parent=base_styles['Normal'],
-                fontName='Helvetica',
+                fontName=get_font_name('normal'),
                 fontSize=11,
                 textColor=GRAY_DARK,
                 spaceAfter=6,
@@ -342,7 +371,7 @@ class PDFReportGenerator:
             'Caption': ParagraphStyle(
                 'Caption',
                 parent=base_styles['Normal'],
-                fontName='Helvetica-Oblique',
+                fontName=get_font_name('italic'),
                 fontSize=9,
                 textColor=GRAY_MEDIUM,
                 spaceAfter=8,
@@ -1271,6 +1300,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
