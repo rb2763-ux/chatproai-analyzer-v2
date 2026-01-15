@@ -1,20 +1,18 @@
 """
 ChatPro AI - Website Crawler
-VERSION 3.1 - MULTI-PAGE CRAWLING + ROOM COUNT
-- Strikte Chatbot-Detection (nur echte Widget-Scripts)
-- Multi-Page-Crawling für Zimmerzahl-Erkennung
-- Intelligente Seiten-Priorität
-- 40+ Patterns für Zimmerzahl-Extraktion
+VERSION 3.0 - FIXED CHATBOT DETECTION
+- Stricter chatbot detection (nur echte Widget-Scripts)
+- Keine False Positives mehr bei Text-Erwähnungen
+- Zimmerzahl-Extraktion aus Content
 """
 
 import requests
 from bs4 import BeautifulSoup
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from urllib.parse import urlparse, urljoin
 import re
 import time
 import logging
-from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +23,12 @@ class WebsiteCrawler:
 
     Features:
     - STRICT Chatbot detection (nur Widget-Scripts, keine Text-Erwähnungen)
-    - MULTI-PAGE Zimmerzahl-Extraktion
+    - Zimmerzahl-Extraktion
     - Lead form detection
     - Language detection
     - Contact information extraction
     
-    Version: 3.1 - Multi-page crawling for room count detection
+    Version: 3.0 - Fixed false positive chatbot detection
     """
 
     def __init__(self, timeout: int = 30):
@@ -56,27 +54,10 @@ class WebsiteCrawler:
             "crisp": ["client.crisp.chat"],
             "smartsupp": ["smartsupp.com/widget"]
         }
-        
-        # Subpages to check for room count (priority order)
-        self.room_count_subpages = [
-            "/zimmer",
-            "/rooms",
-            "/unterkuenfte",
-            "/accommodations",
-            "/ueber-uns",
-            "/about",
-            "/hotel",
-            "/das-hotel",
-            "/the-hotel",
-            "/ausstattung",
-            "/facilities",
-            "/unser-haus",
-            "/our-house"
-        ]
 
     async def crawl(self, url: str) -> Dict:
         """
-        Main crawl method with multi-page support
+        Main crawl method
 
         Args:
             url: Website URL to crawl
@@ -85,11 +66,11 @@ class WebsiteCrawler:
             Dict with crawl results
         """
         try:
-            # Make request to main page
+            # Make request
             response = requests.get(
                 url,
                 timeout=self.timeout,
-                headers={"User-Agent": "ChatProAI-Analyzer/3.1"}
+                headers={"User-Agent": "ChatProAI-Analyzer/3.0"}
             )
             response.raise_for_status()
 
@@ -97,7 +78,7 @@ class WebsiteCrawler:
             soup = BeautifulSoup(response.text, 'html.parser')
             html_content = response.text
 
-            # Collect data from main page
+            # Collect data
             analysis = {
                 "url": url,
                 "final_url": response.url,
@@ -108,8 +89,7 @@ class WebsiteCrawler:
                 "has_chatbot": False,
                 "chatbot_type": None,
                 "chatbot_details": {},
-                "room_count": None,
-                "room_count_source": None,
+                "room_count": self._extract_room_count(html_content, soup),  # NEU!
                 "lead_forms": self._find_lead_forms(soup),
                 "pages_count": self._count_pages(soup),
                 "mobile_responsive": self._check_mobile(soup),
@@ -123,23 +103,10 @@ class WebsiteCrawler:
             analysis["chatbot_type"] = chatbot_info.get("chatbot_type")
             analysis["chatbot_details"] = chatbot_info
 
-            # Extract room count from main page
-            room_count, source = self._extract_room_count_enhanced(html_content, soup)
-            analysis["room_count"] = room_count
-            analysis["room_count_source"] = source if room_count else None
-
-            # If room count not found on main page, try subpages
-            if not room_count:
-                logger.info("🔍 Room count not found on main page, checking subpages...")
-                room_count, source = await self._crawl_subpages_for_room_count(url)
-                analysis["room_count"] = room_count
-                analysis["room_count_source"] = source if room_count else None
-
-            logger.info(f"✅ Crawl complete: {url}")
+            logger.info(f"Crawl complete: {url}")
             logger.info(f"  - Has chatbot: {analysis['has_chatbot']}")
             logger.info(f"  - Chatbot type: {analysis['chatbot_type']}")
             logger.info(f"  - Room count: {analysis['room_count']}")
-            logger.info(f"  - Room count source: {analysis['room_count_source']}")
 
             return analysis
 
@@ -164,151 +131,6 @@ class WebsiteCrawler:
                 "error": "UnexpectedException",
                 "error_message": str(e)
             }
-
-    async def _crawl_subpages_for_room_count(self, base_url: str, max_pages: int = 3) -> Tuple[Optional[int], Optional[str]]:
-        """
-        Crawl subpages to find room count
-        
-        Args:
-            base_url: Base URL of the website
-            max_pages: Maximum number of subpages to crawl (default: 3)
-            
-        Returns:
-            Tuple of (room_count, source_url) or (None, None)
-        """
-        base_url = base_url.rstrip('/')
-        pages_checked = 0
-        
-        for subpage in self.room_count_subpages:
-            if pages_checked >= max_pages:
-                logger.info(f"⚠️ Reached max subpage limit ({max_pages}), stopping search")
-                break
-                
-            subpage_url = base_url + subpage
-            
-            try:
-                logger.info(f"🔍 Checking subpage: {subpage_url}")
-                response = requests.get(
-                    subpage_url,
-                    timeout=10,  # Shorter timeout for subpages
-                    headers={"User-Agent": "ChatProAI-Analyzer/3.1"}
-                )
-                
-                # Only continue if page exists
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    room_count, _ = self._extract_room_count_enhanced(response.text, soup)
-                    
-                    if room_count:
-                        logger.info(f"✅ ROOM COUNT FOUND on subpage: {subpage_url}")
-                        return room_count, subpage_url
-                    
-                    pages_checked += 1
-                else:
-                    logger.debug(f"⏭️ Skipping {subpage_url} (status: {response.status_code})")
-                    
-            except requests.exceptions.RequestException as e:
-                logger.debug(f"⏭️ Skipping {subpage_url} (error: {str(e)})")
-                continue
-        
-        logger.info("❌ Room count not found on any subpage")
-        return None, None
-
-    def _extract_room_count_enhanced(self, html_content: str, soup: BeautifulSoup) -> Tuple[Optional[int], Optional[str]]:
-        """
-        Enhanced room count extraction with 40+ patterns
-        
-        Returns:
-            Tuple of (room_count, pattern_used) or (None, None)
-        """
-        
-        # EXTENDED Patterns (40+ variations)
-        patterns = [
-            # German - Basic
-            (r'(\d+)\s+zimmer', 'basic_zimmer'),
-            (r'(\d+)\s+hotelzimmer', 'hotelzimmer'),
-            (r'(\d+)\s+gästezimmer', 'gaestezimmer'),
-            (r'(\d+)\s+doppelzimmer', 'doppelzimmer'),
-            (r'(\d+)\s+einzelzimmer', 'einzelzimmer'),
-            (r'(\d+)\s+komfortable\s+zimmer', 'komfortable_zimmer'),
-            (r'(\d+)\s+gemütliche\s+zimmer', 'gemuetliche_zimmer'),
-            (r'(\d+)\s+moderne\s+zimmer', 'moderne_zimmer'),
-            
-            # German - Sentence patterns
-            (r'verfügen\s+über\s+(\d+)\s+zimmer', 'verfuegen_ueber'),
-            (r'bieten\s+(\d+)\s+zimmer', 'bieten'),
-            (r'insgesamt\s+(\d+)\s+zimmer', 'insgesamt'),
-            (r'gesamt\s+(\d+)\s+zimmer', 'gesamt'),
-            (r'(\d+)\s+zimmer\s+und\s+suiten', 'zimmer_und_suiten'),
-            (r'hotel\s+(?:verfügt\s+über|hat|bietet|besitzt)\s+(\d+)\s+zimmer', 'hotel_hat'),
-            (r'wir\s+(?:verfügen\s+über|haben|bieten)\s+(\d+)\s+zimmer', 'wir_haben'),
-            (r'unser\s+haus\s+(?:verfügt\s+über|hat|bietet)\s+(\d+)\s+zimmer', 'unser_haus'),
-            
-            # English - Basic
-            (r'(\d+)\s+rooms?', 'basic_rooms'),
-            (r'(\d+)\s+guest\s+rooms?', 'guest_rooms'),
-            (r'(\d+)\s+hotel\s+rooms?', 'hotel_rooms'),
-            (r'(\d+)\s+double\s+rooms?', 'double_rooms'),
-            (r'(\d+)\s+single\s+rooms?', 'single_rooms'),
-            (r'(\d+)\s+comfortable\s+rooms?', 'comfortable_rooms'),
-            (r'(\d+)\s+elegant\s+rooms?', 'elegant_rooms'),
-            (r'(\d+)\s+modern\s+rooms?', 'modern_rooms'),
-            
-            # English - Sentence patterns
-            (r'feature\s+(\d+)\s+rooms?', 'feature'),
-            (r'offer\s+(\d+)\s+rooms?', 'offer'),
-            (r'total\s+of\s+(\d+)\s+rooms?', 'total_of'),
-            (r'(\d+)\s+rooms?\s+and\s+suites?', 'rooms_and_suites'),
-            (r'our\s+hotel\s+(?:has|features|offers)\s+(\d+)\s+rooms?', 'our_hotel_has'),
-            (r'we\s+(?:have|offer|feature)\s+(\d+)\s+rooms?', 'we_have'),
-            (r'the\s+hotel\s+(?:has|features|offers)\s+(\d+)\s+rooms?', 'the_hotel_has'),
-            
-            # Units & Apartments
-            (r'(\d+)\s+einheiten', 'einheiten'),
-            (r'(\d+)\s+units?', 'units'),
-            (r'(\d+)\s+ferienwohnungen?', 'ferienwohnungen'),
-            (r'(\d+)\s+apartments?', 'apartments'),
-            (r'(\d+)\s+suites?', 'suites'),
-            (r'(\d+)\s+accommodations?', 'accommodations'),
-            
-            # Special formats
-            (r'zimmerzahl:\s*(\d+)', 'zimmerzahl_label'),
-            (r'anzahl\s+zimmer:\s*(\d+)', 'anzahl_label'),
-            (r'number\s+of\s+rooms:\s*(\d+)', 'number_label'),
-            (r'rooms:\s*(\d+)', 'rooms_label'),
-            (r'(\d+)\s+zimmer\s+verfügbar', 'verfuegbar'),
-            (r'(\d+)\s+rooms?\s+available', 'available'),
-        ]
-        
-        html_lower = html_content.lower()
-        
-        # Try all patterns and collect results
-        found_counts = []
-        for pattern, pattern_name in patterns:
-            matches = re.findall(pattern, html_lower)
-            if matches:
-                for match in matches:
-                    try:
-                        room_count = int(match)
-                        # Sanity check: between 1 and 500 rooms
-                        if 1 <= room_count <= 500:
-                            found_counts.append((room_count, pattern_name))
-                    except ValueError:
-                        continue
-        
-        # If multiple counts found, use frequency analysis
-        if found_counts:
-            # Count frequency of each room_count
-            counter = Counter([count for count, _ in found_counts])
-            most_common_count, frequency = counter.most_common(1)[0]
-            
-            # Get the pattern that found this count
-            matching_pattern = next((p for c, p in found_counts if c == most_common_count), "unknown")
-            
-            logger.info(f"✅ ROOM COUNT: {most_common_count} (pattern: {matching_pattern}, frequency: {frequency})")
-            return most_common_count, matching_pattern
-        
-        return None, None
 
     def _get_title(self, soup: BeautifulSoup) -> str:
         """Extract page title"""
@@ -417,6 +239,50 @@ class WebsiteCrawler:
             "detection_method": None
         }
 
+    def _extract_room_count(self, html_content: str, soup: BeautifulSoup) -> Optional[int]:
+        """
+        Extract room/unit count from website content
+        
+        Looks for patterns like:
+        - "17 Zimmer"
+        - "20 rooms"
+        - "5 Ferienwohnungen"
+        - "30 units"
+        
+        Returns:
+            int: Number of rooms/units, or None if not found
+        """
+        
+        # Patterns to search for
+        patterns = [
+            r'(\d+)\s+zimmer',
+            r'(\d+)\s+rooms?',
+            r'(\d+)\s+einheiten',
+            r'(\d+)\s+units?',
+            r'(\d+)\s+ferienwohnungen?',
+            r'(\d+)\s+apartments?',
+            r'(\d+)\s+suites?',
+            r'(\d+)\s+accommodations?'
+        ]
+        
+        html_lower = html_content.lower()
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, html_lower)
+            if matches:
+                # Take first match and convert to int
+                try:
+                    room_count = int(matches[0])
+                    # Sanity check: between 1 and 500 rooms
+                    if 1 <= room_count <= 500:
+                        logger.info(f"✅ ROOM COUNT FOUND: {room_count} (pattern: {pattern})")
+                        return room_count
+                except ValueError:
+                    continue
+        
+        logger.info("❌ NO ROOM COUNT DETECTED")
+        return None
+
     def _find_lead_forms(self, soup: BeautifulSoup) -> List[Dict]:
         """Find lead generation forms"""
         forms = []
@@ -514,7 +380,7 @@ if __name__ == "__main__":
         
         # Test with Engel Sasbachwalden
         print("\n" + "="*80)
-        print("Testing: Hotel Engel Sasbachwalden (V3.1 - Multi-Page)")
+        print("Testing: Hotel Engel Sasbachwalden")
         print("="*80)
         
         result = await crawler.crawl("https://engel-sasbachwalden.de/")
@@ -524,7 +390,6 @@ if __name__ == "__main__":
         print(f"   Has Chatbot: {result.get('has_chatbot')}")
         print(f"   Chatbot Type: {result.get('chatbot_type')}")
         print(f"   Room Count: {result.get('room_count')}")
-        print(f"   Room Count Source: {result.get('room_count_source')}")
         print(f"   Mobile Responsive: {result.get('mobile_responsive')}")
         print(f"   Languages: {result.get('languages')}")
         
