@@ -1,4 +1,4 @@
-"""
+﻿"""
 ChatPro AI - Analysis Pipeline
 PRODUCTION-READY VERSION with proper error handling and logging
 """
@@ -86,11 +86,11 @@ class AnalysisPipeline:
             
             # STEP 3: AI Analysis (WITH sources!)
             logger.info(f"[{analysis_id[:8]}] Step 3/5: Running AI analysis...")
-            analysis_result = self.analyzer.analyze(
+            analysis_result = await self.analyzer.analyze(
                 crawler_data=crawler_data,
                 industry=industry,
                 company_name=company_name,
-                sources=sources  # ← PASS SOURCES HERE!
+                sources=sources  # â† PASS SOURCES HERE!
             )
             
             # Defensive check
