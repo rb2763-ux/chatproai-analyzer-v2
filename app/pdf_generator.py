@@ -60,6 +60,70 @@ MARGIN_BOTTOM = 2 * cm
 CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
 
 
+
+# ============================================================================
+# UTF-8 FONT SUPPORT - DejaVu Sans from app/fonts/
+# ============================================================================
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
+def register_unicode_fonts():
+    """Register Unicode-capable fonts from app/fonts/ directory"""
+    try:
+        import os
+        from pathlib import Path
+        
+        # Get app root directory (where pdf_generator.py is located)
+        app_dir = Path(__file__).parent
+        fonts_dir = app_dir / 'fonts'
+        
+        logger.info(f"Looking for fonts in: {fonts_dir}")
+        
+        if not fonts_dir.exists():
+            logger.warning(f"Fonts directory not found: {fonts_dir}")
+            return False
+        
+        # Register DejaVu Sans fonts from app/fonts/
+        font_files = {
+            'DejaVuSans': 'DejaVuSans.ttf',
+            'DejaVuSans-Bold': 'DejaVuSans-Bold.ttf',
+            'DejaVuSans-Oblique': 'DejaVuSans-Oblique.ttf',
+            'DejaVuSans-BoldOblique': 'DejaVuSans-BoldOblique.ttf'
+        }
+        
+        registered = False
+        for font_name, font_file in font_files.items():
+            font_path = fonts_dir / font_file
+            if font_path.exists():
+                pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
+                logger.info(f"Registered font: {font_name} from {font_path}")
+                registered = True
+            else:
+                logger.warning(f"Font file not found: {font_path}")
+        
+        if registered:
+            # Register font family
+            pdfmetrics.registerFontFamily(
+                'DejaVuSans',
+                normal='DejaVuSans',
+                bold='DejaVuSans-Bold',
+                italic='DejaVuSans-Oblique',
+                boldItalic='DejaVuSans-BoldOblique'
+            )
+            logger.info("DejaVuSans font family registered successfully")
+            return True
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"Font registration failed: {e}")
+        return False
+
+# Try to register fonts at module load time
+FONTS_REGISTERED = register_unicode_fonts()
+
+
 class NumberedCanvas(canvas.Canvas):
     """Custom canvas with professional headers and footers"""
     
@@ -122,92 +186,6 @@ class NumberedCanvas(canvas.Canvas):
         self.restoreState()
 
 
-# ============================================================================
-# UTF-8 FONT SUPPORT - DejaVu Sans Registration
-# ============================================================================
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.pdfmetrics import registerFontFamily
-
-def register_unicode_fonts():
-    """Register DejaVu Sans TrueType fonts for full Unicode support.
-    
-    DejaVu Sans provides:
-    - Full Unicode coverage (German umlauts, special characters)
-    - Professional appearance
-    - Available on Railway Linux by default
-    
-    Returns:
-        bool: True if fonts registered successfully, False otherwise
-    """
-    try:
-        # Font paths for different environments
-        font_paths = [
-            '/usr/share/fonts/truetype/dejavu/',  # Railway Linux (production)
-            '/usr/share/fonts/truetype/',          # Alternative Linux
-            'C:\\Windows\\Fonts\\',                # Windows (local dev)
-        ]
-        
-        font_files = {
-            'DejaVuSans': 'DejaVuSans.ttf',
-            'DejaVuSans-Bold': 'DejaVuSans-Bold.ttf',
-            'DejaVuSans-Oblique': 'DejaVuSans-Oblique.ttf',
-            'DejaVuSans-BoldOblique': 'DejaVuSans-BoldOblique.ttf',
-        }
-        
-        registered_fonts = []
-        
-        # Try to find and register each font
-        for font_name, font_file in font_files.items():
-            font_registered = False
-            for base_path in font_paths:
-                font_path = os.path.join(base_path, font_file)
-                if os.path.exists(font_path):
-                    try:
-                        pdfmetrics.registerFont(TTFont(font_name, font_path))
-                        logger.info(f"Registered font: {font_name}")
-                        registered_fonts.append(font_name)
-                        font_registered = True
-                        break
-                    except Exception as e:
-                        logger.warning(f"Failed to register {font_name}: {e}")
-            
-            if not font_registered:
-                logger.warning(f"Font {font_name} not found in any standard location")
-        
-        # Register font family (enables <b> and <i> tags)
-        if 'DejaVuSans' in registered_fonts:
-            try:
-                registerFontFamily(
-                    'DejaVuSans',
-                    normal='DejaVuSans',
-                    bold='DejaVuSans-Bold' if 'DejaVuSans-Bold' in registered_fonts else 'DejaVuSans',
-                    italic='DejaVuSans-Oblique' if 'DejaVuSans-Oblique' in registered_fonts else 'DejaVuSans',
-                    boldItalic='DejaVuSans-BoldOblique' if 'DejaVuSans-BoldOblique' in registered_fonts else 'DejaVuSans'
-                )
-                logger.info("DejaVuSans font family registered successfully (UTF-8 ready)")
-                return True
-            except Exception as e:
-                logger.error(f"Failed to register font family: {e}")
-                return False
-        else:
-            logger.warning("DejaVu Sans base font not available, using fallback fonts")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Font registration failed: {e}")
-        return False
-
-# Register fonts on module import
-FONTS_REGISTERED = register_unicode_fonts()
-
-if FONTS_REGISTERED:
-    logger.info("UTF-8 font support enabled (DejaVu Sans)")
-else:
-    logger.warning("UTF-8 font support disabled, using Latin-1 fallback fonts")
-# ============================================================================
-
-
 class PDFReportGenerator:
     """
     Professional PDF Report Generator
@@ -216,32 +194,11 @@ class PDFReportGenerator:
     
     def __init__(self):
         """Initialize the PDF generator with professional styles"""
-
-        # UTF-8 Font Setup
-        from reportlab.lib.styles import getSampleStyleSheet
-        self.styles = getSampleStyleSheet()
-        
-        # Override default fonts with Unicode-capable DejaVu Sans
-        if FONTS_REGISTERED:
-            # Update all common styles to use DejaVu Sans
-            for style_name in ['Normal', 'BodyText', 'Italic', 'Definition', 'Code']:
-                if style_name in self.styles:
-                    self.styles[style_name].fontName = 'DejaVuSans'
-            
-            # Update heading styles to use bold variant
-            for style_name in ['Heading1', 'Heading2', 'Heading3', 'Heading4', 'Heading5', 'Heading6', 'Title']:
-                if style_name in self.styles:
-                    self.styles[style_name].fontName = 'DejaVuSans-Bold'
-            
-            logger.info('Using DejaVu Sans for PDF generation (UTF-8 support enabled)')
-        else:
-            logger.warning('Using default fonts (limited to Latin-1 encoding)')
-
         self.styles = self._create_custom_styles()
         
     def _create_custom_styles(self) -> Dict:
         """Create custom paragraph styles for professional layout"""
-        base_styles = self.styles
+        base_styles = getSampleStyleSheet()
         
         custom_styles = {
             # Cover page styles
@@ -414,7 +371,7 @@ class PDFReportGenerator:
         Returns:
             str: Path to generated PDF file
         """
-        # DEFENSIVE: Handle None values gracefully (Railway Production Fix)
+        # ðŸ›¡ï¸ DEFENSIVE: Handle None values gracefully (Railway Production Fix)
         company_name = company_name or "Unknown Company"
         industry = industry or "Business"
         
@@ -426,7 +383,7 @@ class PDFReportGenerator:
         key_findings = analysis_data.get('key_findings') or []
         next_steps = analysis_data.get('next_steps') or []
         
-        logger.info(f"Generating PDF report for: {company_name} ({industry})")
+        logger.info(f"ðŸ“„ Generating PDF report for: {company_name} ({industry})")
         
         try:
             # Set default output path
@@ -1314,3 +1271,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
