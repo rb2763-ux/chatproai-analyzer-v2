@@ -1,4 +1,4 @@
-﻿"""
+"""
 ChatPro AI - Analysis Pipeline
 PRODUCTION-READY VERSION with proper error handling and logging
 """
@@ -86,6 +86,21 @@ class AnalysisPipeline:
             
             # STEP 3: AI Analysis (WITH sources!)
             logger.info(f"[{analysis_id[:8]}] Step 3/5: Running AI analysis...")
+
+            # Extract company name from URL if not provided
+            if not company_name:
+                from urllib.parse import urlparse
+                try:
+                    parsed_url = urlparse(website_url)
+                    domain = parsed_url.netloc
+                    if domain.startswith('www.'):
+                        domain = domain[4:]
+                    # Take first part before dot as company name
+                    company_name = domain.split('.')[0].capitalize() if domain else 'Unknown Company'
+                    logger.info(f'[{analysis_id[:8]}] Extracted company name from URL: {company_name}')
+                except Exception as e:
+                    logger.warning(f'[{analysis_id[:8]}] Failed to extract company name: {e}')
+                    company_name = 'Unknown Company'
             analysis_result = await self.analyzer.analyze(
                 crawler_data=crawler_data,
                 industry=industry,

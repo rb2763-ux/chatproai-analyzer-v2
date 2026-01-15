@@ -307,8 +307,23 @@ class PDFReportGenerator:
         Returns:
             str: Path to generated PDF file
         """
+        # DEFENSIVE: Handle None values gracefully (Railway Production Fix)
+        company_name = company_name or "Unknown Company"
+        industry = industry or "Business"
+        
+        # Safe dict access with defaults
+        company_overview = analysis_data.get('company_overview') or {}
+        pain_points = analysis_data.get('pain_points') or []
+        recommendations = analysis_data.get('recommendations') or []
+        roi_calculation = analysis_data.get('roi_calculation') or {}
+        key_findings = analysis_data.get('key_findings') or []
+        next_steps = analysis_data.get('next_steps') or []
+        
+        logger.info(f"Generating PDF report for: {company_name} ({industry})")
+        
         try:
             # Set default output path
+
             if not output_path:
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 output_path = f"/tmp/report_{company_name}_{timestamp}.pdf"
@@ -369,11 +384,11 @@ class PDFReportGenerator:
             # Build PDF with custom canvas
             doc.build(story, canvasmaker=NumberedCanvas)
             
-            logger.info(f"✅ Professional PDF generated: {output_path}")
+            logger.info(f"âœ… Professional PDF generated: {output_path}")
             return output_path
             
         except Exception as e:
-            logger.error(f"❌ Error generating PDF: {str(e)}")
+            logger.error(f"âŒ Error generating PDF: {str(e)}")
             raise
     
     def _create_cover_page(self, company_name: str, industry: str, 
@@ -392,7 +407,7 @@ class PDFReportGenerator:
         
         # Subtitle
         elements.append(Paragraph(
-            "Geschäftsanalyse-Bericht",
+            "GeschÃ¤ftsanalyse-Bericht",
             self.styles['CoverSubtitle']
         ))
         
@@ -439,7 +454,7 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 0.6*cm))
         
         elements.append(Paragraph(
-            "<b>ChatPro AI</b> | KI-gestützte Geschäftsanalyse",
+            "<b>ChatPro AI</b> | KI-gestÃ¼tzte GeschÃ¤ftsanalyse",
             self.styles['CoverMeta']
         ))
         
@@ -456,9 +471,9 @@ class PDFReportGenerator:
         )
         
         elements.append(Paragraph(
-            "<i>Hinweis: Diese Analyse basiert auf Schätzungen und automatisierten Berechnungen. "
-            "Die dargestellten ROI-Werte und Empfehlungen dienen ausschließlich zu Informationszwecken "
-            "und stellen keine Garantie für tatsächliche Ergebnisse dar. Keine Rechts- oder Anlageberatung.</i>",
+            "<i>Hinweis: Diese Analyse basiert auf SchÃ¤tzungen und automatisierten Berechnungen. "
+            "Die dargestellten ROI-Werte und Empfehlungen dienen ausschlieÃŸlich zu Informationszwecken "
+            "und stellen keine Garantie fÃ¼r tatsÃ¤chliche Ergebnisse dar. Keine Rechts- oder Anlageberatung.</i>",
             disclaimer_style
         ))
         
@@ -473,7 +488,7 @@ class PDFReportGenerator:
         
         toc_data = [
             ['1.', 'Zusammenfassung', '3'],
-            ['2.', 'Unternehmensübersicht', '4'],
+            ['2.', 'UnternehmensÃ¼bersicht', '4'],
             ['3.', 'ROI-Analyse', '5'],
             ['4.', 'Identifizierte Herausforderungen', '6'],
             ['5.', 'Empfehlungen', '7'],
@@ -511,9 +526,9 @@ class PDFReportGenerator:
         
         # Summary text
         summary_text = f"""
-        Diese Analyse untersucht die digitale Präsenz und identifiziert konkrete 
+        Diese Analyse untersucht die digitale PrÃ¤senz und identifiziert konkrete 
         Optimierungspotenziale. Basierend auf unserer Bewertung der Website und 
-        Branchenbenchmarks haben wir {len(pain_points)} prioritäre Handlungsfelder 
+        Branchenbenchmarks haben wir {len(pain_points)} prioritÃ¤re Handlungsfelder 
         identifiziert und {len(recommendations)} umsetzbare Empfehlungen entwickelt.
         """
         
@@ -526,10 +541,10 @@ class PDFReportGenerator:
         break_even = roi_calc.get('break_even_months', 0)
         
         metrics_data = [
-            ['Monatliches ROI-Potenzial', f"€{monthly_roi:,}"],
+            ['Monatliches ROI-Potenzial', f"â‚¬{monthly_roi:,}"],
             ['ROI-Multiplikator', f"{roi_multiplier}x"],
             ['Break-Even Zeitraum', f"{break_even} Monate"],
-            ['Prioritäre Maßnahmen', str(len([r for r in recommendations if r.get('priority') == 'HIGH']))],
+            ['PrioritÃ¤re MaÃŸnahmen', str(len([r for r in recommendations if r.get('priority') == 'HIGH']))],
         ]
         
         metrics_table = Table(metrics_data, colWidths=[10*cm, 6*cm])
@@ -553,11 +568,11 @@ class PDFReportGenerator:
         # Quick wins highlight
         quick_wins = [r for r in recommendations if r.get('quick_win', False)]
         if quick_wins:
-            elements.append(Paragraph("⚡ Schnelle Erfolge", self.styles['Heading3']))
+            elements.append(Paragraph("âš¡ Schnelle Erfolge", self.styles['Heading3']))
             
             for rec in quick_wins[:3]:  # Top 3 quick wins
                 elements.append(Paragraph(
-                    f"• <b>{rec.get('title', 'N/A')}</b>",
+                    f"â€¢ <b>{rec.get('title', 'N/A')}</b>",
                     self.styles['BulletPoint']
                 ))
             
@@ -566,13 +581,13 @@ class PDFReportGenerator:
         # Chatbot detection
         if crawler_data.get('has_chatbot'):
             elements.append(Paragraph(
-                "✅ <b>Chatbot erkannt:</b> Ihre Website verfügt bereits über einen Chatbot. "
+                "âœ… <b>Chatbot erkannt:</b> Ihre Website verfÃ¼gt bereits Ã¼ber einen Chatbot. "
                 "Unsere Analyse zeigt Optimierungspotenziale auf.",
                 self.styles['BodyText']
             ))
         else:
             elements.append(Paragraph(
-                "⚠️ <b>Kein Chatbot erkannt:</b> Die Integration eines KI-Chatbots könnte "
+                "âš ï¸ <b>Kein Chatbot erkannt:</b> Die Integration eines KI-Chatbots kÃ¶nnte "
                 "Kundenanfragen automatisieren und die Conversion-Rate steigern.",
                 self.styles['BodyText']
             ))
@@ -581,9 +596,9 @@ class PDFReportGenerator:
         
         # Disclaimer box
         disclaimer_text = (
-            "<i>⚠️ <b>Wichtiger Hinweis:</b> Diese Analyse stellt eine unverbindliche Einschätzung dar "
+            "<i>âš ï¸ <b>Wichtiger Hinweis:</b> Diese Analyse stellt eine unverbindliche EinschÃ¤tzung dar "
             "und basiert auf automatisierten Berechnungen sowie allgemeinen Branchendaten. "
-            "Die genannten Werte sind Schätzungen und können im Einzelfall erheblich abweichen. "
+            "Die genannten Werte sind SchÃ¤tzungen und kÃ¶nnen im Einzelfall erheblich abweichen. "
             "Diese Analyse ersetzt keine professionelle Beratung.</i>"
         )
         
@@ -610,7 +625,7 @@ class PDFReportGenerator:
         """Create company overview section"""
         elements = []
         
-        elements.append(Paragraph("Unternehmensübersicht", self.styles['Heading1']))
+        elements.append(Paragraph("UnternehmensÃ¼bersicht", self.styles['Heading1']))
         elements.append(Spacer(1, 0.3*cm))
         
         # Company info table
@@ -686,7 +701,7 @@ class PDFReportGenerator:
         
         if not roi_calc:
             elements.append(Paragraph(
-                "Keine ROI-Daten verfügbar.",
+                "Keine ROI-Daten verfÃ¼gbar.",
                 self.styles['BodyText']
             ))
             return elements
@@ -699,7 +714,7 @@ class PDFReportGenerator:
         # Key figures in boxes
         figures_data = [
             [
-                Paragraph(f"<b>€{monthly_roi:,}</b>", self.styles['MetricValue']),
+                Paragraph(f"<b>â‚¬{monthly_roi:,}</b>", self.styles['MetricValue']),
                 Paragraph(f"<b>{roi_multiplier}x</b>", self.styles['MetricValue']),
                 Paragraph(f"<b>{break_even}</b>", self.styles['MetricValue'])
             ],
@@ -724,7 +739,7 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 0.4*cm))
         
         # Formula explanation
-        formula_text = roi_calc.get('formula_explanation', 'Keine Formel verfügbar')
+        formula_text = roi_calc.get('formula_explanation', 'Keine Formel verfÃ¼gbar')
         elements.append(Paragraph("Berechnungsgrundlage", self.styles['Heading3']))
         elements.append(Paragraph(formula_text, self.styles['BodyText']))
         elements.append(Spacer(1, 0.3*cm))
@@ -735,18 +750,18 @@ class PDFReportGenerator:
             elements.append(Paragraph("Annahmen", self.styles['Heading3']))
             for assumption in assumptions:
                 elements.append(Paragraph(
-                    f"• {assumption}",
+                    f"â€¢ {assumption}",
                     self.styles['BulletPoint']
                 ))
             elements.append(Spacer(1, 0.3*cm))
         
         # ROI Disclaimer
         roi_disclaimer_text = (
-            "<i>⚠️ <b>ROI-Disclaimer:</b> Die dargestellten ROI-Berechnungen sind Schätzungen basierend auf "
-            "Branchendurchschnitten, allgemeinen Marktdaten und KI-gestützten Analysen. Tatsächliche Ergebnisse "
-            "können erheblich abweichen und hängen von zahlreichen Faktoren ab, einschließlich aber nicht beschränkt auf: "
-            "Marktbedingungen, Wettbewerb, Umsetzungsqualität und externe Einflüsse. "
-            "<b>Wir übernehmen keine Gewähr oder Garantie für die Richtigkeit der Berechnungen oder "
+            "<i>âš ï¸ <b>ROI-Disclaimer:</b> Die dargestellten ROI-Berechnungen sind SchÃ¤tzungen basierend auf "
+            "Branchendurchschnitten, allgemeinen Marktdaten und KI-gestÃ¼tzten Analysen. TatsÃ¤chliche Ergebnisse "
+            "kÃ¶nnen erheblich abweichen und hÃ¤ngen von zahlreichen Faktoren ab, einschlieÃŸlich aber nicht beschrÃ¤nkt auf: "
+            "Marktbedingungen, Wettbewerb, UmsetzungsqualitÃ¤t und externe EinflÃ¼sse. "
+            "<b>Wir Ã¼bernehmen keine GewÃ¤hr oder Garantie fÃ¼r die Richtigkeit der Berechnungen oder "
             "den Eintritt der prognostizierten Ergebnisse.</b> Diese Informationen stellen keine Anlage-, "
             "Rechts- oder Steuerberatung dar.</i>"
         )
@@ -774,7 +789,7 @@ class PDFReportGenerator:
                                     self.styles['Heading3']))
             elements.append(self._create_roi_chart(monthly_roi))
             elements.append(Paragraph(
-                "Abbildung: Prognostizierter monatlicher ROI über 6 Monate",
+                "Abbildung: Prognostizierter monatlicher ROI Ã¼ber 6 Monate",
                 self.styles['Caption']
             ))
         
@@ -802,9 +817,9 @@ class PDFReportGenerator:
         
         # Priority summary
         summary_data = [
-            ['🔴 Hohe Priorität', str(len(high_priority))],
-            ['🟠 Mittlere Priorität', str(len(medium_priority))],
-            ['🟡 Niedrige Priorität', str(len(low_priority))],
+            ['ðŸ”´ Hohe PrioritÃ¤t', str(len(high_priority))],
+            ['ðŸŸ  Mittlere PrioritÃ¤t', str(len(medium_priority))],
+            ['ðŸŸ¡ Niedrige PrioritÃ¤t', str(len(low_priority))],
         ]
         
         summary_table = Table(summary_data, colWidths=[13*cm, 3*cm])
@@ -832,10 +847,10 @@ class PDFReportGenerator:
             }.get(priority, GRAY_MEDIUM)
             
             priority_emoji = {
-                'HIGH': '🔴',
-                'MEDIUM': '🟠',
-                'LOW': '🟡'
-            }.get(priority, '⚪')
+                'HIGH': 'ðŸ”´',
+                'MEDIUM': 'ðŸŸ ',
+                'LOW': 'ðŸŸ¡'
+            }.get(priority, 'âšª')
             
             # Pain point box
             title = pain_point.get('title', 'N/A')
@@ -852,8 +867,8 @@ class PDFReportGenerator:
             # Info table
             info_data = [
                 ['Kategorie', category],
-                ['Priorität', priority],
-                ['Geschäftliche Auswirkung', business_impact],
+                ['PrioritÃ¤t', priority],
+                ['GeschÃ¤ftliche Auswirkung', business_impact],
             ]
             
             info_table = Table(info_data, colWidths=[4*cm, 12*cm])
@@ -884,7 +899,7 @@ class PDFReportGenerator:
         
         if not recommendations:
             elements.append(Paragraph(
-                "Keine Empfehlungen verfügbar.",
+                "Keine Empfehlungen verfÃ¼gbar.",
                 self.styles['BodyText']
             ))
             return elements
@@ -894,7 +909,7 @@ class PDFReportGenerator:
         regular_recs = [r for r in recommendations if not r.get('quick_win', False)]
         
         if quick_wins:
-            elements.append(Paragraph("⚡ Schnelle Erfolge", self.styles['Heading2']))
+            elements.append(Paragraph("âš¡ Schnelle Erfolge", self.styles['Heading2']))
             elements.append(Spacer(1, 0.3*cm))
             
             for idx, rec in enumerate(quick_wins, 1):
@@ -903,7 +918,7 @@ class PDFReportGenerator:
         if regular_recs:
             if quick_wins:
                 elements.append(Spacer(1, 0.4*cm))
-            elements.append(Paragraph("📋 Weitere Empfehlungen", self.styles['Heading2']))
+            elements.append(Paragraph("ðŸ“‹ Weitere Empfehlungen", self.styles['Heading2']))
             elements.append(Spacer(1, 0.3*cm))
             
             start_idx = len(quick_wins) + 1
@@ -924,13 +939,13 @@ class PDFReportGenerator:
         
         # Priority indicator
         priority_emoji = {
-            'HIGH': '🔴',
-            'MEDIUM': '🟠',
-            'LOW': '🟡'
-        }.get(priority, '⚪')
+            'HIGH': 'ðŸ”´',
+            'MEDIUM': 'ðŸŸ ',
+            'LOW': 'ðŸŸ¡'
+        }.get(priority, 'âšª')
         
         # Title
-        quick_win_badge = " ⚡" if is_quick_win else ""
+        quick_win_badge = " âš¡" if is_quick_win else ""
         elements.append(Paragraph(
             f"{priority_emoji} <b>Empfehlung #{idx}: {title}{quick_win_badge}</b>",
             self.styles['Heading3']
@@ -938,7 +953,7 @@ class PDFReportGenerator:
         
         # Info table
         info_data = [
-            ['Priorität', priority],
+            ['PrioritÃ¤t', priority],
             ['Business Value', business_value],
             ['Umsetzungsaufwand', implementation_effort],
         ]
@@ -995,7 +1010,7 @@ class PDFReportGenerator:
             
             if key_insight:
                 elements.append(Paragraph(
-                    f"→ {key_insight}",
+                    f"â†’ {key_insight}",
                     self.styles['BodyTextIndent']
                 ))
             
@@ -1016,69 +1031,69 @@ class PDFReportGenerator:
                 'title': '1. ALLGEMEINE HINWEISE',
                 'content': (
                     "Die in diesem Report dargestellten Analysen, Berechnungen und Empfehlungen basieren auf:"
-                    "<br/>• Automatisierter Website-Analyse mittels KI-Technologie"
-                    "<br/>• Allgemeinen Branchendaten und statistischen Durchschnittswerten"
-                    "<br/>• Öffentlich zugänglichen Marktinformationen"
-                    "<br/>• KI-gestützten Schätzungen und Hochrechnungen"
+                    "<br/>â€¢ Automatisierter Website-Analyse mittels KI-Technologie"
+                    "<br/>â€¢ Allgemeinen Branchendaten und statistischen Durchschnittswerten"
+                    "<br/>â€¢ Ã–ffentlich zugÃ¤nglichen Marktinformationen"
+                    "<br/>â€¢ KI-gestÃ¼tzten SchÃ¤tzungen und Hochrechnungen"
                     "<br/><br/>"
-                    "Diese Analyse dient ausschließlich zu Informationszwecken und stellt eine "
-                    "unverbindliche Einschätzung dar."
+                    "Diese Analyse dient ausschlieÃŸlich zu Informationszwecken und stellt eine "
+                    "unverbindliche EinschÃ¤tzung dar."
                 )
             },
             {
-                'title': '2. KEINE GEWÄHR FÜR RICHTIGKEIT',
+                'title': '2. KEINE GEWÃ„HR FÃœR RICHTIGKEIT',
                 'content': (
-                    "<b>Wir übernehmen keine Gewähr oder Garantie für:</b>"
-                    "<br/>• Die Richtigkeit, Vollständigkeit oder Aktualität der Informationen"
-                    "<br/>• Die Genauigkeit der ROI-Berechnungen und Prognosen"
-                    "<br/>• Den Eintritt der prognostizierten Geschäftsergebnisse"
-                    "<br/>• Den Erfolg der implementierten Empfehlungen"
-                    "<br/>• Die Eignung der Empfehlungen für Ihren spezifischen Einzelfall"
+                    "<b>Wir Ã¼bernehmen keine GewÃ¤hr oder Garantie fÃ¼r:</b>"
+                    "<br/>â€¢ Die Richtigkeit, VollstÃ¤ndigkeit oder AktualitÃ¤t der Informationen"
+                    "<br/>â€¢ Die Genauigkeit der ROI-Berechnungen und Prognosen"
+                    "<br/>â€¢ Den Eintritt der prognostizierten GeschÃ¤ftsergebnisse"
+                    "<br/>â€¢ Den Erfolg der implementierten Empfehlungen"
+                    "<br/>â€¢ Die Eignung der Empfehlungen fÃ¼r Ihren spezifischen Einzelfall"
                     "<br/><br/>"
-                    "<b>Tatsächliche Ergebnisse können erheblich von den Schätzungen abweichen</b> und hängen von "
-                    "zahlreichen Faktoren ab, einschließlich aber nicht beschränkt auf: Marktbedingungen, "
-                    "Wettbewerbssituation, Umsetzungsqualität, Timing, Budget, Team-Kompetenz und externe Einflüsse."
+                    "<b>TatsÃ¤chliche Ergebnisse kÃ¶nnen erheblich von den SchÃ¤tzungen abweichen</b> und hÃ¤ngen von "
+                    "zahlreichen Faktoren ab, einschlieÃŸlich aber nicht beschrÃ¤nkt auf: Marktbedingungen, "
+                    "Wettbewerbssituation, UmsetzungsqualitÃ¤t, Timing, Budget, Team-Kompetenz und externe EinflÃ¼sse."
                 )
             },
             {
                 'title': '3. HAFTUNGSAUSSCHLUSS',
                 'content': (
-                    "<b>ChatPro AI haftet nicht für:</b>"
-                    "<br/>• Finanzielle Verluste oder entgangene Gewinne"
-                    "<br/>• Geschäftsschäden jeglicher Art"
-                    "<br/>• Folgeschäden aus der Nutzung dieser Analyse"
-                    "<br/>• Entscheidungen, die auf Basis dieses Reports getroffen werden"
+                    "<b>ChatPro AI haftet nicht fÃ¼r:</b>"
+                    "<br/>â€¢ Finanzielle Verluste oder entgangene Gewinne"
+                    "<br/>â€¢ GeschÃ¤ftsschÃ¤den jeglicher Art"
+                    "<br/>â€¢ FolgeschÃ¤den aus der Nutzung dieser Analyse"
+                    "<br/>â€¢ Entscheidungen, die auf Basis dieses Reports getroffen werden"
                     "<br/><br/>"
                     "Die Nutzung der Informationen in diesem Report erfolgt auf eigenes Risiko. "
-                    "Der Nutzer trägt die volle Verantwortung für alle geschäftlichen Entscheidungen "
+                    "Der Nutzer trÃ¤gt die volle Verantwortung fÃ¼r alle geschÃ¤ftlichen Entscheidungen "
                     "und deren Umsetzung."
                 )
             },
             {
                 'title': '4. KEINE BERATUNG',
                 'content': (
-                    "<b>Dieser Report stellt ausdrücklich KEINE dar:</b>"
-                    "<br/>• Rechtsberatung oder juristische Empfehlung"
-                    "<br/>• Steuerberatung oder steuerliche Empfehlung"
-                    "<br/>• Anlageberatung oder Finanzberatung"
-                    "<br/>• Unternehmensberatung im Sinne professioneller Consultingleistungen"
-                    "<br/>• Individualisierte Beratung für Ihren spezifischen Einzelfall"
+                    "<b>Dieser Report stellt ausdrÃ¼cklich KEINE dar:</b>"
+                    "<br/>â€¢ Rechtsberatung oder juristische Empfehlung"
+                    "<br/>â€¢ Steuerberatung oder steuerliche Empfehlung"
+                    "<br/>â€¢ Anlageberatung oder Finanzberatung"
+                    "<br/>â€¢ Unternehmensberatung im Sinne professioneller Consultingleistungen"
+                    "<br/>â€¢ Individualisierte Beratung fÃ¼r Ihren spezifischen Einzelfall"
                     "<br/><br/>"
-                    "Für rechtsverbindliche Auskünfte und individuelle Beratung konsultieren Sie bitte "
-                    "entsprechende Fachexperten (Rechtsanwälte, Steuerberater, Unternehmensberater)."
+                    "FÃ¼r rechtsverbindliche AuskÃ¼nfte und individuelle Beratung konsultieren Sie bitte "
+                    "entsprechende Fachexperten (RechtsanwÃ¤lte, Steuerberater, Unternehmensberater)."
                 )
             },
             {
                 'title': '5. DATENSCHUTZ (DSGVO)',
                 'content': (
                     "Diese Analyse wurde unter Beachtung der Datenschutz-Grundverordnung (DSGVO) erstellt. "
-                    "Es wurden ausschließlich öffentlich zugängliche Informationen Ihrer Website analysiert. "
+                    "Es wurden ausschlieÃŸlich Ã¶ffentlich zugÃ¤ngliche Informationen Ihrer Website analysiert. "
                     "<br/><br/>"
                     "<b>Datenverarbeitung:</b>"
-                    "<br/>• Website-URL und öffentliche Inhalte"
-                    "<br/>• Unternehmensname (soweit öffentlich)"
-                    "<br/>• Branchenzuordnung"
-                    "<br/>• Kontakt-E-Mail (nur für Report-Zustellung)"
+                    "<br/>â€¢ Website-URL und Ã¶ffentliche Inhalte"
+                    "<br/>â€¢ Unternehmensname (soweit Ã¶ffentlich)"
+                    "<br/>â€¢ Branchenzuordnung"
+                    "<br/>â€¢ Kontakt-E-Mail (nur fÃ¼r Report-Zustellung)"
                     "<br/><br/>"
                     "Weitere Informationen zum Datenschutz finden Sie unter: "
                     "<link href='https://www.chatproai.io/datenschutz' color='blue'>www.chatproai.io/datenschutz</link>"
@@ -1087,25 +1102,25 @@ class PDFReportGenerator:
             {
                 'title': '6. URHEBERRECHT',
                 'content': (
-                    "Dieser Report und alle darin enthaltenen Inhalte sind urheberrechtlich geschützt. "
+                    "Dieser Report und alle darin enthaltenen Inhalte sind urheberrechtlich geschÃ¼tzt. "
                     "<br/><br/>"
-                    "<b>© 2026 ChatPro AI - Alle Rechte vorbehalten.</b>"
+                    "<b>Â© 2026 ChatPro AI - Alle Rechte vorbehalten.</b>"
                     "<br/><br/>"
-                    "Die Weitergabe, Vervielfältigung oder Veröffentlichung dieses Reports oder Teilen davon "
-                    "ist nur mit ausdrücklicher schriftlicher Genehmigung von ChatPro AI gestattet."
+                    "Die Weitergabe, VervielfÃ¤ltigung oder VerÃ¶ffentlichung dieses Reports oder Teilen davon "
+                    "ist nur mit ausdrÃ¼cklicher schriftlicher Genehmigung von ChatPro AI gestattet."
                 )
             },
             {
                 'title': '7. KONTAKT & SUPPORT',
                 'content': (
                     "<b>ChatPro AI</b>"
-                    "<br/>KI-gestützte Geschäftsanalyse"
+                    "<br/>KI-gestÃ¼tzte GeschÃ¤ftsanalyse"
                     "<br/><br/>"
                     "Website: <link href='https://www.chatproai.io' color='blue'>www.chatproai.io</link>"
                     "<br/>E-Mail: info@chatproai.io"
 
                     "<br/><br/>"
-                    "Für Fragen zu diesem Report oder unseren Dienstleistungen kontaktieren Sie uns gerne."
+                    "FÃ¼r Fragen zu diesem Report oder unseren Dienstleistungen kontaktieren Sie uns gerne."
                 )
             }
         ]
@@ -1120,9 +1135,9 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 0.3*cm))
         
         final_notice = (
-            "<b>⚠️ WICHTIG:</b> Mit der Nutzung dieses Reports bestätigen Sie, dass Sie diese rechtlichen "
+            "<b>âš ï¸ WICHTIG:</b> Mit der Nutzung dieses Reports bestÃ¤tigen Sie, dass Sie diese rechtlichen "
             "Hinweise zur Kenntnis genommen haben und akzeptieren. Sollten Sie mit diesen Bedingungen "
-            "nicht einverstanden sein, dürfen Sie die Informationen in diesem Report nicht verwenden."
+            "nicht einverstanden sein, dÃ¼rfen Sie die Informationen in diesem Report nicht verwenden."
         )
         
         final_notice_data = [[Paragraph(final_notice, self.styles['BodyText'])]]
@@ -1168,7 +1183,7 @@ def main():
                     'category': 'Customer Experience',
                     'priority': 'HIGH',
                     'description': 'Mobile Nutzer konvertieren nur mit 2.3%',
-                    'business_impact': '€12,000/Monat verloren'
+                    'business_impact': 'â‚¬12,000/Monat verloren'
                 }
             ],
             'recommendations': [
@@ -1177,7 +1192,7 @@ def main():
                     'priority': 'HIGH',
                     'quick_win': True,
                     'description': 'Implementierung eines responsiven Designs',
-                    'business_value': '+€12,000/Monat',
+                    'business_value': '+â‚¬12,000/Monat',
                     'implementation_effort': '2-3 Wochen'
                 }
             ]
@@ -1187,7 +1202,7 @@ def main():
     
     generator = PDFReportGenerator()
     output = generator.generate(**test_data)
-    print(f"✅ Test PDF generated: {output}")
+    print(f"âœ… Test PDF generated: {output}")
 
 
 if __name__ == '__main__':
