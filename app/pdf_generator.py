@@ -740,7 +740,7 @@ class PDFReportGenerator:
             ['Analysedatum', datetime.now().strftime('%d.%m.%Y')],
         ]
         
-        overview_table = Table(overview_data, colWidths=[5*cm, 11*cm])
+        overview_table = Table(overview_data, colWidths=[4.5*cm, 11.5*cm])
         overview_table.setStyle(TableStyle([
             ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 10),
             ('FONT', (1, 0), (1, -1), 'Helvetica', 10),
@@ -1051,7 +1051,7 @@ class PDFReportGenerator:
             ['Umsetzungsaufwand', implementation_effort],
         ]
         
-        info_table = Table(info_data, colWidths=[5*cm, 11*cm])
+        info_table = Table(info_data, colWidths=[4.5*cm, 11.5*cm])
         info_table.setStyle(TableStyle([
             ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 9),
             ('FONT', (1, 0), (1, -1), 'Helvetica', 9),
