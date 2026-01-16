@@ -233,20 +233,29 @@ class PDFReportGenerator:
         Based on ReportLab best practices:
         - Strings DON'T wrap in table cells → text gets cut off
         - Paragraphs DO wrap automatically → text breaks into multiple lines
+        - Only wrap text longer than 40 characters (short text stays as string)
         
         Args:
             text: Text to wrap (string or None)
             
         Returns:
-            Paragraph: Wrapped text object for table cells
+            Paragraph or str: Wrapped text for long content, plain string for short
         """
-        if text is None or str(text).strip() == '':
-            return Paragraph("", self.styles['BodyText'])
+        if text is None:
+            return ""
         
-        # Convert to string and replace newlines with HTML breaks
-        text_str = str(text).replace('\n', '<br/>')
+        text_str = str(text).strip()
         
-        # Use BodyText style for consistent formatting
+        # Return empty string for empty text
+        if text_str == '':
+            return ""
+        
+        # For short text (≤40 chars), return as plain string (no wrapping needed)
+        if len(text_str) <= 40:
+            return text_str
+        
+        # For long text (>40 chars), wrap in Paragraph for automatic line breaks
+        text_str = text_str.replace('\n', '<br/>')
         return Paragraph(text_str, self.styles['BodyText'])
 
     def _create_custom_styles(self) -> Dict:
@@ -988,7 +997,7 @@ class PDFReportGenerator:
                 ['Geschäftliche Auswirkung:', self._wrap_text(business_impact)],
             ]
             
-            info_table = Table(info_data, colWidths=[4*cm, 12*cm])
+            info_table = Table(info_data, colWidths=[5*cm, 11*cm])
             info_table.setStyle(TableStyle([
                 ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 9),
                 ('FONT', (1, 0), (1, -1), 'Helvetica', 9),
