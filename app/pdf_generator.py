@@ -566,7 +566,7 @@ class PDFReportGenerator:
         elements.append(Paragraph(
             "<i>Hinweis: Diese Analyse basiert auf Schätzungen und automatisierten Berechnungen. "
             "Die dargestellten ROI-Werte und Empfehlungen dienen ausschließlich zu Informationszwecken "
-            "und stellen keine Garantie fÃ¼r tatsÃ¤chliche Ergebnisse dar. Keine Rechts- oder Anlageberatung.</i>",
+            "und stellen keine Garantie für tatsächliche Ergebnisse dar. Keine Rechts- oder Anlageberatung.</i>",
             disclaimer_style
         ))
         
@@ -619,7 +619,7 @@ class PDFReportGenerator:
         
         # Summary text
         summary_text = f"""
-        Diese Analyse untersucht die digitale PrÃ¤senz und identifiziert konkrete 
+        Diese Analyse untersucht die digitale Präsenz und identifiziert konkrete 
         Optimierungspotenziale. Basierend auf unserer Bewertung der Website und 
         Branchenbenchmarks haben wir {len(pain_points)} Prioritäre Handlungsfelder 
         identifiziert und {len(recommendations)} umsetzbare Empfehlungen entwickelt.
@@ -689,9 +689,9 @@ class PDFReportGenerator:
         
         # Disclaimer box
         disclaimer_text = (
-            "<i>âš ï¸ <b>Wichtiger Hinweis:</b> Diese Analyse stellt eine unverbindliche EinschÃ¤tzung dar "
+            "<i>âš ï¸ <b>Wichtiger Hinweis:</b> Diese Analyse stellt eine unverbindliche Einschätzung dar "
             "und basiert auf automatisierten Berechnungen sowie allgemeinen Branchendaten. "
-            "Die genannten Werte sind Schätzungen und kÃ¶nnen im Einzelfall erheblich abweichen. "
+            "Die genannten Werte sind Schätzungen und können im Einzelfall erheblich abweichen. "
             "Diese Analyse ersetzt keine professionelle Beratung.</i>"
         )
         
@@ -851,10 +851,10 @@ class PDFReportGenerator:
         # ROI Disclaimer
         roi_disclaimer_text = (
             "<i>âš ï¸ <b>ROI-Disclaimer:</b> Die dargestellten ROI-Berechnungen sind Schätzungen basierend auf "
-            "Branchendurchschnitten, allgemeinen Marktdaten und KI-gestützten Analysen. TatsÃ¤chliche Ergebnisse "
-            "kÃ¶nnen erheblich abweichen und hÃ¤ngen von zahlreichen Faktoren ab, einschlieÃŸlich aber nicht beschrÃ¤nkt auf: "
-            "Marktbedingungen, Wettbewerb, UmsetzungsqualitÃ¤t und externe EinflÃ¼sse. "
-            "<b>Wir übernehmen keine GewÃ¤hr oder Garantie fÃ¼r die Richtigkeit der Berechnungen oder "
+            "Branchendurchschnitten, allgemeinen Marktdaten und KI-gestützten Analysen. Tatsächliche Ergebnisse "
+            "können erheblich abweichen und hängen von zahlreichen Faktoren ab, einschließlich aber nicht beschränkt auf: "
+            "Marktbedingungen, Wettbewerb, Umsetzungsqualität und externe Einflüsse. "
+            "<b>Wir übernehmen keine Gewähr oder Garantie für die Richtigkeit der Berechnungen oder "
             "den Eintritt der prognostizierten Ergebnisse.</b> Diese Informationen stellen keine Anlage-, "
             "Rechts- oder Steuerberatung dar.</i>"
         )
@@ -910,9 +910,9 @@ class PDFReportGenerator:
         
         # Priority summary
         summary_data = [
-            ['ðŸ”´ Hohe PrioritÃ¤t', str(len(high_priority))],
-            ['ðŸŸ  Mittlere PrioritÃ¤t', str(len(medium_priority))],
-            ['ðŸŸ¡ Niedrige PrioritÃ¤t', str(len(low_priority))],
+            ['ðŸ”´ Hohe Priorität', str(len(high_priority))],
+            ['ðŸŸ  Mittlere Priorität', str(len(medium_priority))],
+            ['ðŸŸ¡ Niedrige Priorität', str(len(low_priority))],
         ]
         
         summary_table = Table(summary_data, colWidths=[13*cm, 3*cm])
@@ -960,8 +960,8 @@ class PDFReportGenerator:
             # Info table
             info_data = [
                 ['Kategorie', category],
-                ['PrioritÃ¤t', priority],
-                ['GeschÃ¤ftliche Auswirkung', business_impact],
+                ['Priorität', priority],
+                ['Geschäftliche Auswirkung', business_impact],
             ]
             
             info_table = Table(info_data, colWidths=[4*cm, 12*cm])
@@ -1046,7 +1046,7 @@ class PDFReportGenerator:
         
         # Info table
         info_data = [
-            ['PrioritÃ¤t', priority],
+            ['Priorität', priority],
             ['Business Value', business_value],
             ['Umsetzungsaufwand', implementation_effort],
         ]
@@ -1126,67 +1126,67 @@ class PDFReportGenerator:
                     "Die in diesem Report dargestellten Analysen, Berechnungen und Empfehlungen basieren auf:"
                     "<br/>â€¢ Automatisierter Website-Analyse mittels KI-Technologie"
                     "<br/>â€¢ Allgemeinen Branchendaten und statistischen Durchschnittswerten"
-                    "<br/>â€¢ Ã–ffentlich zugÃ¤nglichen Marktinformationen"
+                    "<br/>â€¢ Öffentlich zugänglichen Marktinformationen"
                     "<br/>â€¢ KI-gestützten Schätzungen und Hochrechnungen"
                     "<br/><br/>"
                     "Diese Analyse dient ausschließlich zu Informationszwecken und stellt eine "
-                    "unverbindliche EinschÃ¤tzung dar."
+                    "unverbindliche Einschätzung dar."
                 )
             },
             {
-                'title': '2. KEINE GEWÃ„HR FÃœR RICHTIGKEIT',
+                'title': '2. KEINE GEWÄHR FÜR RICHTIGKEIT',
                 'content': (
-                    "<b>Wir übernehmen keine GewÃ¤hr oder Garantie fÃ¼r:</b>"
-                    "<br/>â€¢ Die Richtigkeit, VollstÃ¤ndigkeit oder AktualitÃ¤t der Informationen"
+                    "<b>Wir übernehmen keine Gewähr oder Garantie für:</b>"
+                    "<br/>â€¢ Die Richtigkeit, Vollständigkeit oder Aktualität der Informationen"
                     "<br/>â€¢ Die Genauigkeit der ROI-Berechnungen und Prognosen"
                     "<br/>â€¢ Den Eintritt der prognostizierten Geschäftsergebnisse"
                     "<br/>â€¢ Den Erfolg der implementierten Empfehlungen"
-                    "<br/>â€¢ Die Eignung der Empfehlungen fÃ¼r Ihren spezifischen Einzelfall"
+                    "<br/>â€¢ Die Eignung der Empfehlungen für Ihren spezifischen Einzelfall"
                     "<br/><br/>"
-                    "<b>TatsÃ¤chliche Ergebnisse kÃ¶nnen erheblich von den Schätzungen abweichen</b> und hÃ¤ngen von "
-                    "zahlreichen Faktoren ab, einschlieÃŸlich aber nicht beschrÃ¤nkt auf: Marktbedingungen, "
-                    "Wettbewerbssituation, UmsetzungsqualitÃ¤t, Timing, Budget, Team-Kompetenz und externe EinflÃ¼sse."
+                    "<b>Tatsächliche Ergebnisse können erheblich von den Schätzungen abweichen</b> und hängen von "
+                    "zahlreichen Faktoren ab, einschließlich aber nicht beschränkt auf: Marktbedingungen, "
+                    "Wettbewerbssituation, Umsetzungsqualität, Timing, Budget, Team-Kompetenz und externe Einflüsse."
                 )
             },
             {
                 'title': '3. HAFTUNGSAUSSCHLUSS',
                 'content': (
-                    "<b>ChatPro AI haftet nicht fÃ¼r:</b>"
+                    "<b>ChatPro AI haftet nicht für:</b>"
                     "<br/>â€¢ Finanzielle Verluste oder entgangene Gewinne"
-                    "<br/>â€¢ GeschäftsschÃ¤den jeglicher Art"
-                    "<br/>â€¢ FolgeschÃ¤den aus der Nutzung dieser Analyse"
+                    "<br/>â€¢ Geschäftsschäden jeglicher Art"
+                    "<br/>â€¢ Folgeschäden aus der Nutzung dieser Analyse"
                     "<br/>â€¢ Entscheidungen, die auf Basis dieses Reports getroffen werden"
                     "<br/><br/>"
                     "Die Nutzung der Informationen in diesem Report erfolgt auf eigenes Risiko. "
-                    "Der Nutzer trÃ¤gt die volle Verantwortung fÃ¼r alle geschÃ¤ftlichen Entscheidungen "
+                    "Der Nutzer trägt die volle Verantwortung für alle geschäftlichen Entscheidungen "
                     "und deren Umsetzung."
                 )
             },
             {
                 'title': '4. KEINE BERATUNG',
                 'content': (
-                    "<b>Dieser Report stellt ausdrÃ¼cklich KEINE dar:</b>"
+                    "<b>Dieser Report stellt ausdrücklich KEINE dar:</b>"
                     "<br/>â€¢ Rechtsberatung oder juristische Empfehlung"
                     "<br/>â€¢ Steuerberatung oder steuerliche Empfehlung"
                     "<br/>â€¢ Anlageberatung oder Finanzberatung"
                     "<br/>â€¢ Unternehmensberatung im Sinne professioneller Consultingleistungen"
-                    "<br/>â€¢ Individualisierte Beratung fÃ¼r Ihren spezifischen Einzelfall"
+                    "<br/>â€¢ Individualisierte Beratung für Ihren spezifischen Einzelfall"
                     "<br/><br/>"
-                    "FÃ¼r rechtsverbindliche AuskÃ¼nfte und individuelle Beratung konsultieren Sie bitte "
-                    "entsprechende Fachexperten (RechtsanwÃ¤lte, Steuerberater, Unternehmensberater)."
+                    "Für rechtsverbindliche Auskünfte und individuelle Beratung konsultieren Sie bitte "
+                    "entsprechende Fachexperten (Rechtsanwälte, Steuerberater, Unternehmensberater)."
                 )
             },
             {
                 'title': '5. DATENSCHUTZ (DSGVO)',
                 'content': (
                     "Diese Analyse wurde unter Beachtung der Datenschutz-Grundverordnung (DSGVO) erstellt. "
-                    "Es wurden ausschließlich Ã¶ffentlich zugÃ¤ngliche Informationen Ihrer Website analysiert. "
+                    "Es wurden ausschließlich öffentlich zugängliche Informationen Ihrer Website analysiert. "
                     "<br/><br/>"
                     "<b>Datenverarbeitung:</b>"
-                    "<br/>â€¢ Website-URL und Ã¶ffentliche Inhalte"
-                    "<br/>â€¢ Unternehmensname (soweit Ã¶ffentlich)"
+                    "<br/>â€¢ Website-URL und öffentliche Inhalte"
+                    "<br/>â€¢ Unternehmensname (soweit öffentlich)"
                     "<br/>â€¢ Branchenzuordnung"
-                    "<br/>â€¢ Kontakt-E-Mail (nur fÃ¼r Report-Zustellung)"
+                    "<br/>â€¢ Kontakt-E-Mail (nur für Report-Zustellung)"
                     "<br/><br/>"
                     "Weitere Informationen zum Datenschutz finden Sie unter: "
                     "<link href='https://www.chatproai.io/datenschutz' color='blue'>www.chatproai.io/datenschutz</link>"
@@ -1195,12 +1195,12 @@ class PDFReportGenerator:
             {
                 'title': '6. URHEBERRECHT',
                 'content': (
-                    "Dieser Report und alle darin enthaltenen Inhalte sind urheberrechtlich geschÃ¼tzt. "
+                    "Dieser Report und alle darin enthaltenen Inhalte sind urheberrechtlich geschützt. "
                     "<br/><br/>"
                     "<b>Â© 2026 ChatPro AI - Alle Rechte vorbehalten.</b>"
                     "<br/><br/>"
-                    "Die Weitergabe, VervielfÃ¤ltigung oder VerÃ¶ffentlichung dieses Reports oder Teilen davon "
-                    "ist nur mit ausdrÃ¼cklicher schriftlicher Genehmigung von ChatPro AI gestattet."
+                    "Die Weitergabe, Vervielfältigung oder Veröffentlichung dieses Reports oder Teilen davon "
+                    "ist nur mit ausdrücklicher schriftlicher Genehmigung von ChatPro AI gestattet."
                 )
             },
             {
@@ -1213,7 +1213,7 @@ class PDFReportGenerator:
                     "<br/>E-Mail: info@chatproai.io"
 
                     "<br/><br/>"
-                    "FÃ¼r Fragen zu diesem Report oder unseren Dienstleistungen kontaktieren Sie uns gerne."
+                    "Für Fragen zu diesem Report oder unseren Dienstleistungen kontaktieren Sie uns gerne."
                 )
             }
         ]
@@ -1228,9 +1228,9 @@ class PDFReportGenerator:
         elements.append(Spacer(1, 0.3*cm))
         
         final_notice = (
-            "<b>âš ï¸ WICHTIG:</b> Mit der Nutzung dieses Reports bestÃ¤tigen Sie, dass Sie diese rechtlichen "
+            "<b>âš ï¸ WICHTIG:</b> Mit der Nutzung dieses Reports bestätigen Sie, dass Sie diese rechtlichen "
             "Hinweise zur Kenntnis genommen haben und akzeptieren. Sollten Sie mit diesen Bedingungen "
-            "nicht einverstanden sein, dÃ¼rfen Sie die Informationen in diesem Report nicht verwenden."
+            "nicht einverstanden sein, dürfen Sie die Informationen in diesem Report nicht verwenden."
         )
         
         final_notice_data = [[Paragraph(final_notice, self.styles['BodyText'])]]
