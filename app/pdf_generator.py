@@ -154,28 +154,6 @@ def get_font_name(style='normal'):
         }
         return font_map.get(style, 'Helvetica')
 
-    def _wrap_text(self, text):
-        """Wrap text in Paragraph for automatic word wrapping in table cells.
-        
-        Based on ReportLab best practices (Stack Overflow + ReportLab docs):
-        - Strings DON'T wrap in table cells → text gets cut off
-        - Paragraphs DO wrap automatically → text breaks into multiple lines
-        
-        Args:
-            text: Text to wrap (string or None)
-            
-        Returns:
-            Paragraph: Wrapped text object for table cells
-        """
-        if text is None or str(text).strip() == '':
-            return Paragraph("", self.styles['BodyText'])
-        
-        # Convert to string and replace newlines with HTML breaks
-        text_str = str(text).replace('\n', '<br/>')
-        
-        # Use BodyText style for consistent formatting
-        return Paragraph(text_str, self.styles['BodyText'])
-
 class NumberedCanvas(canvas.Canvas):
     """Custom canvas with professional headers and footers"""
     
@@ -248,6 +226,29 @@ class PDFReportGenerator:
         """Initialize the PDF generator with professional styles"""
         self.styles = self._create_custom_styles()
         
+    
+    def _wrap_text(self, text):
+        """Wrap text in Paragraph for automatic word wrapping in table cells.
+        
+        Based on ReportLab best practices:
+        - Strings DON'T wrap in table cells → text gets cut off
+        - Paragraphs DO wrap automatically → text breaks into multiple lines
+        
+        Args:
+            text: Text to wrap (string or None)
+            
+        Returns:
+            Paragraph: Wrapped text object for table cells
+        """
+        if text is None or str(text).strip() == '':
+            return Paragraph("", self.styles['BodyText'])
+        
+        # Convert to string and replace newlines with HTML breaks
+        text_str = str(text).replace('\n', '<br/>')
+        
+        # Use BodyText style for consistent formatting
+        return Paragraph(text_str, self.styles['BodyText'])
+
     def _create_custom_styles(self) -> Dict:
         """Create custom paragraph styles for professional layout"""
         base_styles = getSampleStyleSheet()
