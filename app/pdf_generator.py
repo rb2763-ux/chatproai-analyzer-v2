@@ -964,7 +964,7 @@ class PDFReportGenerator:
                 ['Geschäftliche Auswirkung', business_impact],
             ]
             
-            info_table = Table(info_data, colWidths=[3.8*cm, 11.7*cm])
+            info_table = Table(info_data, colWidths=[3.5*cm, 11*cm])
             info_table.setStyle(TableStyle([
                 ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 9),
                 ('FONT', (1, 0), (1, -1), 'Helvetica', 9),
