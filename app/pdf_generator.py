@@ -153,6 +153,29 @@ def get_font_name(style='normal'):
             'bolditalic': 'Helvetica-BoldOblique'
         }
         return font_map.get(style, 'Helvetica')
+
+    def _wrap_text(self, text):
+        """Wrap text in Paragraph for automatic word wrapping in table cells.
+        
+        Based on ReportLab best practices (Stack Overflow + ReportLab docs):
+        - Strings DON'T wrap in table cells → text gets cut off
+        - Paragraphs DO wrap automatically → text breaks into multiple lines
+        
+        Args:
+            text: Text to wrap (string or None)
+            
+        Returns:
+            Paragraph: Wrapped text object for table cells
+        """
+        if text is None or str(text).strip() == '':
+            return Paragraph("", self.styles['BodyText'])
+        
+        # Convert to string and replace newlines with HTML breaks
+        text_str = str(text).replace('\n', '<br/>')
+        
+        # Use BodyText style for consistent formatting
+        return Paragraph(text_str, self.styles['BodyText'])
+
 class NumberedCanvas(canvas.Canvas):
     """Custom canvas with professional headers and footers"""
     
@@ -959,12 +982,12 @@ class PDFReportGenerator:
             
             # Info table
             info_data = [
-                ['Kategorie', category],
-                ['Priorität', priority],
-                ['Geschäftliche Auswirkung', business_impact],
+                ['Kategorie:', self._wrap_text(category)],
+                ['Priorität:', self._wrap_text(priority)],
+                ['Geschäftliche Auswirkung:', self._wrap_text(business_impact)],
             ]
             
-            info_table = Table(info_data, colWidths=[3.5*cm, 11*cm])
+            info_table = Table(info_data, colWidths=[4*cm, 12*cm])
             info_table.setStyle(TableStyle([
                 ('FONT', (0, 0), (0, -1), 'Helvetica-Bold', 9),
                 ('FONT', (1, 0), (1, -1), 'Helvetica', 9),
@@ -1046,9 +1069,9 @@ class PDFReportGenerator:
         
         # Info table
         info_data = [
-            ['Priorität', priority],
-            ['Business Value', business_value],
-            ['Umsetzungsaufwand', implementation_effort],
+            ['Priorität:', self._wrap_text(priority)],
+            ['Business Value:', self._wrap_text(business_value)],
+            ['Umsetzungsaufwand:', self._wrap_text(implementation_effort)],
         ]
         
         info_table = Table(info_data, colWidths=[4.5*cm, 11.5*cm])
