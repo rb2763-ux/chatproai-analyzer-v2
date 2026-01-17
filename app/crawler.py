@@ -98,13 +98,15 @@ class WebsiteCrawler:
             html_content = response.text
 
             # Collect data from main page
+            # Detect languages BEFORE creating dict
+            language_info = self._detect_languages_enhanced(soup, url)
+            
             analysis = {
                 "url": url,
                 "final_url": response.url,
                 "status_code": response.status_code,
                 "title": self._get_title(soup),
                 "meta_description": self._get_meta_description(soup),
-                language_info = self._detect_languages_enhanced(soup, url)
                 "languages": language_info["languages"],
                 "language_detection_method": language_info["method"],
                 "language_urls": language_info.get("language_urls", {}),
