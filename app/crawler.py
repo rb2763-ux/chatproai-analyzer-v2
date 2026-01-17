@@ -100,6 +100,7 @@ class WebsiteCrawler:
             # Collect data from main page
             # Detect languages BEFORE creating dict
             language_info = self._detect_languages_enhanced(soup, url)
+            logger.info(f"🌍 Language Detection: {language_info}")
             
             analysis = {
                 "url": url,
