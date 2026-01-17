@@ -152,6 +152,11 @@ VERSION 3.1 - PREMIUM-FOCUS + QUALITY SCORE SYSTEM
 - 2 Sprachen: +15
 - "International guests": +25
 
+**WICHTIG ZU SPRACHEN:**
+- NUR bei genau "1 Sprache" darfst du den PainPoint "Begrenzte Sprachoptionen" erstellen
+- Bei "2+ Sprachen" = Website ist mehrsprachig = KEIN PainPoint!
+- Wenn du "Available Languages: DE, EN" siehst = 2 Sprachen = KEIN Problem!
+
 **Zusatzleistungen** (0-25):
 - Spa/Wellness: +15
 - Concierge: +15
