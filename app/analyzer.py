@@ -274,6 +274,12 @@ Erstelle jetzt die vollständige Analyse auf DEUTSCH!
             user_msg += f"**Available Languages:** {', '.join([l.upper() for l in lang_list])}\n"
             user_msg += f"**Detection Method:** {lang_method}\n"
             
+            # WICHTIG: Sprach-Interpretation für KI
+            user_msg += "\n**WICHTIG ZU SPRACHEN:**\n"
+            user_msg += f"- Website hat {len(lang_list)} Sprache(n)\n"
+            user_msg += "- NUR 1 Sprache = Herausforderung 'Begrenzte Sprachoptionen'\n"
+            user_msg += "- 2+ Sprachen = KEIN Problem, Website ist mehrsprachig!\n"
+            
             if lang_urls:
                 user_msg += "**Language URLs:**\n"
                 for lang, lang_url in lang_urls.items():
