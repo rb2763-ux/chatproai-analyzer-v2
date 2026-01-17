@@ -1,4 +1,4 @@
-"""
+﻿"""
 ChatPro AI - Website Crawler
 VERSION 3.1 - MULTI-PAGE CRAWLING + ROOM COUNT
 - Strikte Chatbot-Detection (nur echte Widget-Scripts)
@@ -104,7 +104,10 @@ class WebsiteCrawler:
                 "status_code": response.status_code,
                 "title": self._get_title(soup),
                 "meta_description": self._get_meta_description(soup),
-                "languages": self._detect_languages(soup),
+                language_info = self._detect_languages_enhanced(soup, url)
+                "languages": language_info["languages"],
+                "language_detection_method": language_info["method"],
+                "language_urls": language_info.get("language_urls", {}),
                 "has_chatbot": False,
                 "chatbot_type": None,
                 "chatbot_details": {},
