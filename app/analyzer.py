@@ -265,20 +265,21 @@ Erstelle jetzt die vollständige Analyse auf DEUTSCH!
             user_msg += f"- Chatbot Type: {crawler_data.get('chatbot_type', 'None')}\n"
             user_msg += f"- Room Count: {crawler_data.get('room_count', 'None')}\n"
             user_msg += f"- Mobile: {crawler_data.get('mobile_responsive', False)}\n"
+            
             # Strukturierte Language-Info für KI
-        lang_list = crawler_data.get('languages', [])
-        lang_method = crawler_data.get('language_detection_method', 'unknown')
-        lang_urls = crawler_data.get('language_urls', {})
-        
-        user_msg += f"**Available Languages:** {', '.join([l.upper() for l in lang_list])}\n"
-        user_msg += f"**Detection Method:** {lang_method}\n"
-        
-        if lang_urls:
-            user_msg += "**Language URLs:**\n"
-            for lang, lang_url in lang_urls.items():
-                user_msg += f"  - {lang.upper()}: {lang_url}\n"
-        
-        user_msg += "\n"
+            lang_list = crawler_data.get('languages', [])
+            lang_method = crawler_data.get('language_detection_method', 'unknown')
+            lang_urls = crawler_data.get('language_urls', {})
+            
+            user_msg += f"**Available Languages:** {', '.join([l.upper() for l in lang_list])}\n"
+            user_msg += f"**Detection Method:** {lang_method}\n"
+            
+            if lang_urls:
+                user_msg += "**Language URLs:**\n"
+                for lang, lang_url in lang_urls.items():
+                    user_msg += f"  - {lang.upper()}: {lang_url}\n"
+            
+            user_msg += "\n"
             user_msg += "**AUFGABE:**\n"
             user_msg += "1. Berechne Quality Score\n"
             user_msg += "2. Schätze room_count falls None\n"
