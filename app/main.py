@@ -35,6 +35,7 @@ app.add_middleware(
 # Initialize Pipeline
 pipeline = AnalysisPipeline(output_dir="/mnt/user-data/outputs")
 
+# Trigger Railway
 # Request Models
 class AnalysisRequest(BaseModel):
     website_url: str  # Changed from HttpUrl for flexibility
