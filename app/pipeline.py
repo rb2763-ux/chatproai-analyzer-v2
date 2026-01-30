@@ -116,7 +116,7 @@ class AnalysisPipeline:
             report_filename = f"chatpro_analyse_{analysis_id[:8]}.pdf"
             report_path = os.path.join(self.output_dir, report_filename)
             
-            generated_path = await self.pdf_generator.generate(
+            generated_path = self.pdf_generator.generate(
                 crawler_data=crawler_data,
                 analysis_data=analysis_result,
                 company_name=company_name,

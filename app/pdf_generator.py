@@ -17,7 +17,7 @@ class PDFReportGenerator:
         self.template_dir = os.path.join(os.path.dirname(__file__), 'templates')
         os.makedirs(self.template_dir, exist_ok=True)
     
-    async def generate(
+    def generate(
         self,
         crawler_data: Dict,
         analysis_data: Dict,
@@ -43,32 +43,11 @@ class PDFReportGenerator:
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        # Convert to PDF using Playwright Chromium (async)
+        # Convert to PDF using WeasyPrint (pure Python, no browser needed)
         pdf_path = output_path if output_path.endswith('.pdf') else output_path.replace('.html', '.pdf')
         try:
-            from playwright.async_api import async_playwright
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(
-                    headless=True,
-                    args=[
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                    ]
-                )
-                page = await browser.new_page()
-                # Load HTML content directly (avoids file:// font issues)
-                with open(html_path, 'r', encoding='utf-8') as f:
-                    html = f.read()
-                await page.set_content(html, wait_until='networkidle')
-                await page.pdf(
-                    path=pdf_path,
-                    format='A4',
-                    print_background=True,
-                    margin={'top': '0', 'right': '0', 'bottom': '0', 'left': '0'}
-                )
-                await browser.close()
+            from weasyprint import HTML
+            HTML(filename=html_path).write_pdf(pdf_path)
             print(f"  ✅ PDF created: {pdf_path}")
             # Clean up HTML temp file
             try:
@@ -156,7 +135,7 @@ class PDFReportGenerator:
     <style>
         /* === MCKINSEY-STYLE CSS === */
         
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        /* Inter font - fallback to Liberation Sans / system fonts */
         
         :root {{
             --primary-navy: #0f172a;
@@ -180,7 +159,7 @@ class PDFReportGenerator:
         }}
         
         body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Liberation Sans', 'DejaVu Sans', Arial, Helvetica, sans-serif;
             margin: 0;
             padding: 0;
             color: var(--text-primary);
@@ -245,11 +224,14 @@ class PDFReportGenerator:
         }}
         
         .cover-meta {{
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            display: flex;
+            justify-content: space-between;
             gap: 20px;
             margin: 40px 0;
             font-size: 13px;
+        }}
+        .cover-meta > div {{
+            flex: 1;
         }}
         
         .cover-footer {{
@@ -284,10 +266,12 @@ class PDFReportGenerator:
         }}
         
         .traffic-lights {{
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            display: flex;
             gap: 12px;
             margin: 15px 0;
+        }}
+        .traffic-light {{
+            flex: 1;
         }}
         
         .traffic-light {{
@@ -311,10 +295,12 @@ class PDFReportGenerator:
         }}
         
         .kpi-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            display: flex;
             gap: 12px;
             margin: 15px 0;
+        }}
+        .kpi-card {{
+            flex: 1;
         }}
         
         .kpi-card {{
@@ -419,10 +405,14 @@ class PDFReportGenerator:
         
         /* Risk Cards */
         .risk-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin: 10px 0;
+        }}
+        .risk-card {{
+            flex: 1 1 45%;
+            min-width: 250px;
         }}
         
         .risk-card {{
@@ -629,10 +619,12 @@ class PDFReportGenerator:
         }}
         
         .steps-container {{
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            display: flex;
             gap: 18px;
             margin: 20px 0;
+        }}
+        .step-card {{
+            flex: 1;
         }}
         
         .step-card {{
