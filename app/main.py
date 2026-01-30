@@ -93,7 +93,14 @@ async def process_analysis_task(analysis_id: str, request: AnalysisRequest):
                 "progress": 100,
                 "report_path": result["report_path"],
                 "report_url": f"/api/report/{analysis_id}",
-                "data": result["data"],
+                "data": {
+                    "roi_monat": result.get("roi_monat", 0),
+                    "roi_multiplier": result.get("roi_multiplier", 0),
+                    "chatbot_priority": result.get("chatbot_priority", "MEDIUM"),
+                    "has_chatbot": result.get("has_chatbot", False),
+                    "processing_time": result.get("processing_time", {})
+                },
+                "download_url": f"/api/report/{analysis_id}",
                 "completed_at": datetime.utcnow().isoformat()
             })
         else:
