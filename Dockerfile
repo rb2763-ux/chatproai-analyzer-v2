@@ -1,15 +1,20 @@
 FROM python:3.12-slim
 
+# Cache bust: 2026-01-30-v2
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Install Python deps first
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright Chromium + ALL system dependencies
-RUN playwright install --with-deps chromium
+# Install Playwright Chromium + ALL system dependencies in one step
+RUN playwright install --with-deps chromium && \
+    playwright install-deps && \
+    apt-get install -y --no-install-recommends libxfixes3 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Verify Chromium works
+RUN python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); b = p.chromium.launch(headless=True, args=['--no-sandbox']); b.close(); p.stop(); print('✅ Chromium works!')"
 
 # Copy app code
 COPY . .
@@ -17,5 +22,4 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Start command
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
