@@ -92,9 +92,10 @@ class PDFReportGenerator:
         roi_multiplier = roi_calc.get('roi_multiplier', 0)
         break_even = roi_calc.get('break_even_months', 0)
         
-        # Priority translation
-        priority_map = {'HIGH': 'HOCH', 'MEDIUM': 'MITTEL', 'LOW': 'NIEDRIG'}
-        chatbot_priority_de = priority_map.get(chatbot_priority, 'MITTEL')
+        # Priority translation — action-oriented, kein "MITTEL" (Eigentor-Vermeidung)
+        priority_map = {'HIGH': 'SOFORT UMSETZEN', 'MEDIUM': 'KURZFRISTIG UMSETZEN', 'LOW': 'STRATEGISCH PLANEN',
+                        'HOCH': 'SOFORT UMSETZEN', 'MITTEL': 'KURZFRISTIG UMSETZEN', 'NIEDRIG': 'STRATEGISCH PLANEN'}
+        chatbot_priority_de = priority_map.get(chatbot_priority, 'KURZFRISTIG UMSETZEN')
         
         # Generate HTML sections
         pain_points_html = self._generate_pain_points_html(pain_points)
@@ -167,12 +168,12 @@ class PDFReportGenerator:
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 60px;
+            padding: 50px;
         }}
         
         .cover-header {{
             text-align: center;
-            margin-top: 100px;
+            margin-top: 60px;
         }}
         
         .logo {{
@@ -183,25 +184,25 @@ class PDFReportGenerator:
         }}
         
         .cover-title {{
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 300;
-            margin: 40px 0;
+            margin: 30px 0;
             line-height: 1.2;
         }}
         
         .company-name {{
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 600;
             color: #93c5fd;
-            margin: 30px 0;
+            margin: 20px 0;
         }}
         
         .cover-meta {{
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin: 60px 0;
-            font-size: 14px;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 40px 0;
+            font-size: 13px;
         }}
         
         .cover-footer {{
@@ -214,7 +215,7 @@ class PDFReportGenerator:
         
         /* === EXECUTIVE SUMMARY (PAGE 2) === */
         .exec-page {{
-            padding: 60px;
+            padding: 40px 50px;
         }}
         
         .page-title {{
@@ -228,7 +229,7 @@ class PDFReportGenerator:
         .page-title::after {{
             content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -8px;
             left: 0;
             width: 60px;
             height: 3px;
@@ -238,14 +239,14 @@ class PDFReportGenerator:
         .traffic-lights {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 20px;
-            margin: 40px 0;
+            gap: 15px;
+            margin: 25px 0;
         }}
         
         .traffic-light {{
             background: var(--surface-light);
             border-radius: 8px;
-            padding: 20px;
+            padding: 14px;
             text-align: center;
             border: 1px solid var(--border-light);
         }}
@@ -265,15 +266,15 @@ class PDFReportGenerator:
         .kpi-grid {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 30px;
-            margin: 40px 0;
+            gap: 15px;
+            margin: 20px 0;
         }}
         
         .kpi-card {{
             background: var(--background);
             border: 2px solid var(--border-light);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 10px;
+            padding: 16px;
             text-align: center;
         }}
         
@@ -287,10 +288,10 @@ class PDFReportGenerator:
         }}
         
         .kpi-value {{
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             color: var(--primary-navy);
-            margin: 5px 0;
+            margin: 4px 0;
         }}
         
         .kpi-unit {{
@@ -301,21 +302,21 @@ class PDFReportGenerator:
         .management-summary {{
             background: var(--surface-light);
             border-left: 4px solid var(--accent-blue);
-            padding: 25px;
-            margin: 30px 0;
-            font-size: 13px;
-            line-height: 1.7;
+            padding: 18px 22px;
+            margin: 20px 0;
+            font-size: 12px;
+            line-height: 1.6;
         }}
         
         /* === STANDARD CONTENT PAGES === */
         .content-page {{
-            padding: 60px;
+            padding: 35px 50px;
         }}
         
         .section-header {{
             display: flex;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 18px;
         }}
         
         .section-number {{
@@ -372,8 +373,8 @@ class PDFReportGenerator:
         .risk-grid {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin: 30px 0;
+            gap: 15px;
+            margin: 15px 0;
         }}
         
         .risk-card {{
@@ -385,7 +386,7 @@ class PDFReportGenerator:
         
         .risk-header {{
             background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%);
-            padding: 16px 20px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border-light);
         }}
         
@@ -408,7 +409,7 @@ class PDFReportGenerator:
         }}
         
         .risk-body {{
-            padding: 20px;
+            padding: 14px 16px;
         }}
         
         .risk-impact {{
@@ -516,15 +517,15 @@ class PDFReportGenerator:
         /* Recommendations */
         .recommendation-card {{
             border-left: 4px solid var(--border-light);
-            padding: 20px;
-            margin: 15px 0;
+            padding: 14px 18px;
+            margin: 10px 0;
             background: var(--background);
             border-radius: 0 8px 8px 0;
         }}
         
-        .priority-hoch {{ border-left-color: var(--danger-red); }}
-        .priority-mittel {{ border-left-color: var(--warning-orange); }}
-        .priority-niedrig {{ border-left-color: var(--success-green); }}
+        .priority-hoch, .priority-sofort {{ border-left-color: var(--danger-red); }}
+        .priority-mittel, .priority-kurzfristig {{ border-left-color: var(--warning-orange); }}
+        .priority-niedrig, .priority-strategisch {{ border-left-color: var(--success-green); }}
         
         .rec-header {{
             display: flex;
@@ -541,9 +542,9 @@ class PDFReportGenerator:
             margin-right: 12px;
         }}
         
-        .badge-hoch {{ background: var(--danger-red); }}
-        .badge-mittel {{ background: var(--warning-orange); }}
-        .badge-niedrig {{ background: var(--success-green); }}
+        .badge-hoch, .badge-sofort {{ background: var(--danger-red); }}
+        .badge-mittel, .badge-kurzfristig {{ background: var(--warning-orange); }}
+        .badge-niedrig, .badge-strategisch {{ background: var(--success-green); }}
         
         .rec-title {{
             font-size: 15px;
@@ -564,29 +565,29 @@ class PDFReportGenerator:
         
         /* CTA Page */
         .cta-page {{
-            padding: 60px;
+            padding: 40px 50px;
             text-align: center;
             background: linear-gradient(135deg, var(--surface-light) 0%, white 100%);
         }}
         
         .cta-title {{
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 600;
             color: var(--primary-navy);
-            margin: 60px 0 40px 0;
+            margin: 30px 0 20px 0;
         }}
         
         .steps-container {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 40px;
-            margin: 60px 0;
+            gap: 25px;
+            margin: 30px 0;
         }}
         
         .step-card {{
             background: white;
-            border-radius: 12px;
-            padding: 30px 20px;
+            border-radius: 10px;
+            padding: 22px 16px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border-light);
         }}
@@ -615,9 +616,9 @@ class PDFReportGenerator:
         .contact-info {{
             background: var(--primary-navy);
             color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin: 40px 0;
+            padding: 24px;
+            border-radius: 10px;
+            margin: 25px 0;
         }}
         
         .contact-title {{
@@ -1124,12 +1125,16 @@ class PDFReportGenerator:
         
         for rec in recommendations:
             priority = rec.get('priority', 'MEDIUM')
-            priority_de = priority_map.get(priority, 'MITTEL').lower()
+            priority_label = priority_map.get(priority, 'KURZFRISTIG UMSETZEN')
+            # CSS class mapping
+            css_map = {'SOFORT UMSETZEN': 'sofort', 'KURZFRISTIG UMSETZEN': 'kurzfristig', 'STRATEGISCH PLANEN': 'strategisch',
+                       'HOCH': 'sofort', 'MITTEL': 'kurzfristig', 'NIEDRIG': 'strategisch'}
+            priority_css = css_map.get(priority_label, css_map.get(priority, 'kurzfristig'))
             
             html += f"""
-            <div class="recommendation-card priority-{priority_de}">
+            <div class="recommendation-card priority-{priority_css}">
                 <div class="rec-header">
-                    <div class="priority-badge badge-{priority_de}">{priority_map.get(priority, 'MITTEL')} PRIORITÄT</div>
+                    <div class="priority-badge badge-{priority_css}">{priority_label}</div>
                     <h4 class="rec-title">{rec.get('title', 'N/A')}</h4>
                 </div>
                 <div class="rec-description">{rec.get('description', 'N/A')}</div>
