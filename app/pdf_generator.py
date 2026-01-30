@@ -48,9 +48,20 @@ class PDFReportGenerator:
         try:
             from playwright.async_api import async_playwright
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                    ]
+                )
                 page = await browser.new_page()
-                await page.goto(f'file://{os.path.abspath(html_path)}', wait_until='networkidle')
+                # Load HTML content directly (avoids file:// font issues)
+                with open(html_path, 'r', encoding='utf-8') as f:
+                    html = f.read()
+                await page.set_content(html, wait_until='networkidle')
                 await page.pdf(
                     path=pdf_path,
                     format='A4',
@@ -66,7 +77,9 @@ class PDFReportGenerator:
                 pass
             return pdf_path
         except Exception as e:
-            print(f"  ⚠️ PDF conversion failed ({e}), falling back to HTML")
+            import traceback
+            print(f"  ⚠️ PDF conversion failed: {e}")
+            print(f"  Traceback: {traceback.format_exc()}")
             return html_path
     
     def _generate_html(
