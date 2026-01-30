@@ -100,6 +100,9 @@ TONE OF VOICE (STRENG EINHALTEN):
 - Formuliere Probleme als finanzielle Risiken.
 - Sei direkt: "Die fehlende Automatisierung führt zu X", nicht "Es wäre schön, wenn...".
 
+WICHTIG - SPRACHE:
+ALLE Texte müssen auf DEUTSCH formuliert sein. Keine englischen Begriffe außer etablierte Fachbegriffe (ROI, KPI, etc.).
+
 PRODUKT-KONTEXT (CHATPRO AI):
 Wir bieten eine Enterprise-Grade KI-Lösung zur Prozessautomatisierung.
 - Funktionalität: 24/7 Lead-Erfassung, PMS/CRM-Integration, Mehrsprachigkeit.
@@ -114,7 +117,7 @@ ANALYSE-RICHTLINIEN:
 3. **Empfehlungen:** Keine generischen Tipps. Empfiehl konkrete Prozess-Änderungen.
 
 OUTPUT FORMAT:
-JSON gemäß Schema.
+JSON gemäß Schema. ALLE Textausgaben auf Deutsch.
 """
     
     def _build_user_prompt(self, crawler_data: dict, company_name: str, industry: str) -> str:
@@ -236,7 +239,7 @@ Fokussiere dich auf entgangene Umsätze durch fehlende 24/7-Verfügbarkeit und m
                         "properties": {
                             "priority": {
                                 "type": "string",
-                                "enum": ["HIGH", "MEDIUM", "LOW"]
+                                "enum": ["HOCH", "MITTEL", "NIEDRIG"]
                             },
                             "title": {
                                 "type": "string",
@@ -261,7 +264,7 @@ Fokussiere dich auf entgangene Umsätze durch fehlende 24/7-Verfügbarkeit und m
                 },
                 "chatbot_priority": {
                     "type": "string",
-                    "enum": ["HIGH", "MEDIUM", "LOW"],
+                    "enum": ["HOCH", "MITTEL", "NIEDRIG"],
                     "description": "Vertriebspriorität basierend auf Potenzial"
                 }
             },
@@ -301,14 +304,14 @@ Fokussiere dich auf entgangene Umsätze durch fehlende 24/7-Verfügbarkeit und m
             },
             "recommendations": [
                 {
-                    "priority": "HIGH",
+                    "priority": "HOCH",
                     "title": "Automatisierung der Standardkommunikation",
                     "description": "Implementierung einer KI-Lösung zur Entlastung des Personals von repetitiven Anfragen.",
                     "impact": "Sofortige Reduktion der Ticket-Last um ca. 60-80%",
                     "implementation": "Integration ChatPro AI (Premium)"
                 }
             ],
-            "chatbot_priority": "MEDIUM",
+            "chatbot_priority": "MITTEL",
             "model": "fallback",
             "industry": industry
         }

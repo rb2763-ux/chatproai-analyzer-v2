@@ -1,15 +1,16 @@
 """
-CHATPRO AI ANALYZER - PDF REPORT GENERATOR
-Professional Audit-Style HTML Reports (McKinsey Style)
+CHATPRO AI ANALYZER - MCKINSEY-STYLE PDF REPORT GENERATOR
+Premium Business Consulting Report Layout (German)
 """
 
 from typing import Dict, List, Optional
 from datetime import datetime
 import os
+import uuid
 
 class PDFReportGenerator:
     """
-    Generate professional Audit-Style HTML reports
+    Generate McKinsey-style professional HTML reports in German
     """
     
     def __init__(self):
@@ -25,7 +26,7 @@ class PDFReportGenerator:
         output_path: str,
         sources: List[Dict] = None
     ) -> str:
-        """Generate HTML report"""
+        """Generate McKinsey-style HTML report in German"""
         
         html_content = self._generate_html(
             crawler_data,
@@ -52,505 +53,1118 @@ class PDFReportGenerator:
         sources: List[Dict] = None
     ) -> str:
         
-        # Extract Data
+        # Extract analysis data
         pain_points = analysis_data.get('pain_points', [])
         roi_calc = analysis_data.get('roi_calculation', {})
         recommendations = analysis_data.get('recommendations', [])
-        chatbot_priority = analysis_data.get('chatbot_priority', 'MEDIUM')
+        chatbot_priority = analysis_data.get('chatbot_priority', 'MITTEL')
         
-        # Website Metrics
+        # Website metrics
         website_check = {
             'pages': crawler_data.get('page_count', 0),
             'languages': len(crawler_data.get('languages', ['Deutsch'])),
-            'mobile_friendly': crawler_data.get('is_mobile_friendly', True)
-        }
-        
-        chatbot_analysis = {
+            'mobile_friendly': crawler_data.get('is_mobile_friendly', True),
             'has_chatbot': crawler_data.get('has_chatbot', False),
-            'chatbot_type': crawler_data.get('chatbot_type', 'Nicht vorhanden'),
-            'priority': chatbot_priority
+            'chatbot_type': crawler_data.get('chatbot_type', 'Nicht vorhanden')
         }
         
-        # Meta Data
+        # Meta information
         today = datetime.now().strftime("%d.%m.%Y")
+        report_id = str(uuid.uuid4())[:8].upper()
         
-        # Industry Mapping
+        # Industry mapping to German
         industry_map = {
-            "hotel": "Hospitality / Hotellerie",
-            "restaurant": "Gastronomie / Food Service",
+            "hotel": "Hospitality & Hotellerie",
+            "restaurant": "Gastronomie & Food Service",
             "fitness": "Health & Fitness",
-            "salon": "Beauty & Care",
-            "immobilien": "Real Estate",
-            "ecommerce": "E-Commerce / Retail",
-            "anwalt": "Legal Services",
-            "steuerberater": "Tax & Audit",
-            "versicherung": "Insurance",
-            "arzt": "Healthcare"
+            "salon": "Beauty & Wellness",
+            "immobilien": "Immobilien & Real Estate",
+            "ecommerce": "E-Commerce & Retail",
+            "anwalt": "Rechtsberatung & Legal Services",
+            "steuerberater": "Steuerberatung & Audit",
+            "versicherung": "Versicherungswesen",
+            "arzt": "Gesundheitswesen & Healthcare"
         }
         industry_label = industry_map.get(industry.lower(), industry.capitalize())
         
-        # ROI Metrics
+        # ROI metrics
         monthly_roi = roi_calc.get('monthly_roi', 0)
         roi_multiplier = roi_calc.get('roi_multiplier', 0)
         break_even = roi_calc.get('break_even_months', 0)
         
-        # --- HTML GENERATION HELPERS ---
+        # Priority translation
+        priority_map = {'HIGH': 'HOCH', 'MEDIUM': 'MITTEL', 'LOW': 'NIEDRIG'}
+        chatbot_priority_de = priority_map.get(chatbot_priority, 'MITTEL')
         
-        # 1. Sources List
-        sources_html = ""
-        if sources:
-            for source in sources:
-                sources_html += f"""
-                <div class="source-item">
-                    <span class="source-id">[{source.get('id', '?')}]</span>
-                    <span class="source-title">{source.get('title', 'N/A')}</span>
-                    <a href="{source.get('url', '#')}" target="_blank" class="source-link">Quelle öffnen ↗</a>
-                </div>
-                """
+        # Generate HTML sections
+        pain_points_html = self._generate_pain_points_html(pain_points)
+        roi_details_html = self._generate_roi_details_html(roi_calc)
+        recommendations_html = self._generate_recommendations_html(recommendations, priority_map)
+        sources_html = self._generate_sources_html(sources)
+        website_analysis_html = self._generate_website_analysis_html(website_check, crawler_data)
+        waterfall_chart_html = self._generate_waterfall_chart_html(roi_calc)
         
-        # 2. Pain Points (Ineffizienzen)
-        pain_points_html = ""
-        for i, pp in enumerate(pain_points[:3], 1):
-            pain_points_html += f"""
-            <div class="audit-finding">
-                <div class="finding-header">
-                    <span class="finding-id">RISIKO #{i}</span>
-                    <h4>{pp.get('problem', 'N/A')}</h4>
-                </div>
-                <div class="finding-body">
-                    <p><strong>Wirtschaftliche Auswirkung:</strong><br>{pp.get('impact', 'N/A')}</p>
-                    <p class="evidence"><em>Daten-Evidenz: {pp.get('evidence', 'N/A')}</em></p>
-                </div>
-            </div>
-            """
-            
-        # 3. ROI Details
-        roi_details_html = ""
-        for calc in roi_calc.get('calculations', []):
-            roi_details_html += f"""
-            <tr class="roi-row">
-                <td class="roi-cat">{calc.get('category', 'N/A')}</td>
-                <td class="roi-calc">{calc.get('calculation', 'N/A')}</td>
-                <td class="roi-val">€ {calc.get('monthly_value', 0):,.0f}</td>
-            </tr>
-            """
-
-        # 4. Recommendations
-        recommendations_html = ""
-        for rec in recommendations[:4]:
-            prio = rec.get('priority', 'MEDIUM')
-            recommendations_html += f"""
-            <div class="rec-item border-{prio.lower()}">
-                <div class="rec-header">
-                    <span class="badge badge-{prio.lower()}">{prio} PRIORITY</span>
-                    <h4>{rec.get('title', 'N/A')}</h4>
-                </div>
-                <p>{rec.get('description', 'N/A')}</p>
-                <div class="rec-meta">
-                    <span><strong>Impact:</strong> {rec.get('impact', 'N/A')}</span>
-                </div>
-            </div>
-            """
-
-        # --- FULL TEMPLATE ---
+        # Traffic light scoring system
+        scoring_html = self._generate_scoring_system(chatbot_priority, website_check)
+        
+        # Full McKinsey-style HTML template
         html = f"""
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Digital Efficiency Audit - {company_name}</title>
+    <title>Digitale Effizienz-Analyse — {company_name}</title>
     <style>
+        /* === MCKINSEY-STYLE CSS === */
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         :root {{
-            --primary: #0f172a; /* Navy Blue */
-            --secondary: #334155; /* Slate */
-            --accent: #2563eb; /* Royal Blue */
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --border: #e2e8f0;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --danger: #ef4444;
-            --success: #10b981;
+            --primary-navy: #0f172a;
+            --accent-blue: #2563eb;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --success-green: #059669;
+            --warning-orange: #d97706;
+            --danger-red: #dc2626;
+            --background: #ffffff;
+            --surface-light: #f8fafc;
+            --border-light: #e2e8f0;
+        }}
+        
+        /* Page Setup für PDF-Export */
+        @page {{
+            size: A4;
+            margin: 0;
+            color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }}
         
         body {{
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 40px;
+            padding: 0;
+            color: var(--text-primary);
+            background: var(--background);
+            font-size: 12px;
+            line-height: 1.6;
+        }}
+        
+        .page {{
+            min-height: 100vh;
+            page-break-after: always;
+            position: relative;
+        }}
+        
+        .page:last-child {{
+            page-break-after: avoid;
+        }}
+        
+        /* === DECKBLATT (PAGE 1) === */
+        .cover-page {{
+            background: linear-gradient(135deg, var(--primary-navy) 0%, #1e40af 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px;
+        }}
+        
+        .cover-header {{
+            text-align: center;
+            margin-top: 100px;
+        }}
+        
+        .logo {{
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }}
+        
+        .cover-title {{
+            font-size: 48px;
+            font-weight: 300;
+            margin: 40px 0;
+            line-height: 1.2;
+        }}
+        
+        .company-name {{
+            font-size: 28px;
+            font-weight: 600;
+            color: #93c5fd;
+            margin: 30px 0;
+        }}
+        
+        .cover-meta {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 60px 0;
             font-size: 14px;
         }}
         
-        .container {{
-            max-width: 1000px;
-            margin: 0 auto;
-            background: var(--surface);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-        }}
-        
-        /* HEADER */
-        .report-header {{
-            background: var(--primary);
-            color: white;
-            padding: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }}
-        
-        .header-left h1 {{
-            margin: 0;
-            font-size: 24px;
-            font-weight: 300;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            opacity: 0.9;
-        }}
-        
-        .header-left h2 {{
-            margin: 10px 0 0 0;
-            font-size: 32px;
-            font-weight: 700;
-        }}
-        
-        .header-right {{
-            text-align: right;
-            font-size: 12px;
+        .cover-footer {{
+            text-align: center;
+            font-size: 11px;
             opacity: 0.8;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
         }}
         
-        /* EXECUTIVE SUMMARY */
-        .exec-summary {{
-            padding: 40px;
-            background: #f1f5f9;
-            border-bottom: 1px solid var(--border);
+        /* === EXECUTIVE SUMMARY (PAGE 2) === */
+        .exec-page {{
+            padding: 60px;
         }}
         
-        .summary-grid {{
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr 1fr;
-            gap: 30px;
-        }}
-        
-        .kpi-box h3 {{
-            margin: 0 0 10px 0;
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--text-light);
-            letter-spacing: 0.5px;
-        }}
-        
-        .kpi-main {{
-            font-size: 42px;
-            font-weight: 700;
-            color: var(--primary);
-        }}
-        
-        .kpi-sub {{
+        .page-title {{
             font-size: 24px;
             font-weight: 600;
-            color: var(--secondary);
+            color: var(--primary-navy);
+            margin-bottom: 30px;
+            position: relative;
         }}
         
-        .kpi-desc {{
-            font-size: 12px;
-            color: var(--text-light);
-            margin-top: 5px;
+        .page-title::after {{
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--accent-blue);
         }}
         
-        /* SECTIONS */
-        .section {{
-            padding: 40px;
-            border-bottom: 1px solid var(--border);
+        .traffic-lights {{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 40px 0;
+        }}
+        
+        .traffic-light {{
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }}
+        
+        .traffic-icon {{
+            font-size: 24px;
+            margin-bottom: 10px;
+        }}
+        
+        .traffic-label {{
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }}
+        
+        .kpi-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }}
+        
+        .kpi-card {{
+            background: var(--background);
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }}
+        
+        .kpi-label {{
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }}
+        
+        .kpi-value {{
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-navy);
+            margin: 5px 0;
+        }}
+        
+        .kpi-unit {{
+            font-size: 14px;
+            color: var(--text-secondary);
+        }}
+        
+        .management-summary {{
+            background: var(--surface-light);
+            border-left: 4px solid var(--accent-blue);
+            padding: 25px;
+            margin: 30px 0;
+            font-size: 13px;
+            line-height: 1.7;
+        }}
+        
+        /* === STANDARD CONTENT PAGES === */
+        .content-page {{
+            padding: 60px;
+        }}
+        
+        .section-header {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }}
+        
+        .section-number {{
+            background: var(--accent-blue);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 15px;
         }}
         
         .section-title {{
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-navy);
         }}
         
-        .section-title::before {{
-            content: '';
-            display: block;
-            width: 4px;
-            height: 18px;
-            background: var(--accent);
-            margin-right: 10px;
+        /* Website Analysis Table */
+        .analysis-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
         }}
         
-        /* AUDIT FINDINGS */
-        .audit-grid {{
+        .analysis-table th {{
+            background: var(--surface-light);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            border-bottom: 2px solid var(--border-light);
+            color: var(--text-secondary);
+        }}
+        
+        .analysis-table td {{
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 12px;
+        }}
+        
+        .status-icon {{
+            margin-right: 8px;
+        }}
+        
+        .status-good {{ color: var(--success-green); }}
+        .status-warning {{ color: var(--warning-orange); }}
+        .status-critical {{ color: var(--danger-red); }}
+        
+        /* Risk Cards */
+        .risk-grid {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 25px;
+            margin: 30px 0;
         }}
         
-        .audit-finding {{
-            border: 1px solid var(--border);
-            background: #fff;
+        .risk-card {{
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--background);
         }}
         
-        .finding-header {{
-            background: #f8fafc;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .risk-header {{
+            background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
         }}
         
-        .finding-id {{
-            font-size: 10px;
+        .risk-id {{
+            background: var(--danger-red);
+            color: white;
+            font-size: 9px;
             font-weight: 700;
-            color: var(--danger);
-            background: #fef2f2;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
         }}
         
-        .finding-header h4 {{
-            margin: 0;
+        .risk-title {{
             font-size: 14px;
             font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
         }}
         
-        .finding-body {{
+        .risk-body {{
             padding: 20px;
         }}
         
-        .evidence {{
-            margin-top: 15px;
-            font-size: 12px;
-            color: var(--text-light);
-            border-top: 1px dashed var(--border);
-            padding-top: 10px;
+        .risk-impact {{
+            margin-bottom: 15px;
+            line-height: 1.6;
         }}
         
-        /* ROI TABLE */
+        .risk-evidence {{
+            font-size: 11px;
+            color: var(--text-secondary);
+            border-top: 1px dashed var(--border-light);
+            padding-top: 12px;
+            font-style: italic;
+        }}
+        
+        /* ROI Tables */
         .roi-table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            margin: 20px 0;
+            font-size: 12px;
         }}
         
         .roi-table th {{
+            background: var(--primary-navy);
+            color: white;
+            padding: 14px 16px;
             text-align: left;
-            padding: 12px;
-            background: #f8fafc;
-            border-bottom: 2px solid var(--border);
-            color: var(--text-light);
             font-weight: 600;
         }}
         
         .roi-table td {{
-            padding: 15px 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 16px;
+            border-bottom: 1px solid var(--border-light);
         }}
         
-        .roi-val {{
-            text-align: right;
-            font-weight: 700;
-            font-family: monospace;
-            font-size: 14px;
+        .roi-category {{
+            font-weight: 500;
         }}
         
-        .roi-calc {{
-            color: var(--text-light);
-            font-style: italic;
-        }}
-        
-        /* RECOMMENDATIONS */
-        .rec-item {{
-            margin-bottom: 20px;
-            padding: 20px;
-            background: #fff;
-            border-left: 4px solid #ccc;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }}
-        
-        .border-high {{ border-left-color: var(--danger); }}
-        .border-medium {{ border-left-color: #f59e0b; }}
-        .border-low {{ border-left-color: var(--success); }}
-        
-        .rec-header {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }}
-        
-        .badge {{
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 10px;
-            color: white;
-        }}
-        
-        .badge-high {{ background: var(--danger); }}
-        .badge-medium {{ background: #f59e0b; }}
-        .badge-low {{ background: var(--success); }}
-        
-        .rec-header h4 {{ margin: 0; font-size: 15px; }}
-        
-        /* FOOTER */
-        .report-footer {{
-            background: #f1f5f9;
-            padding: 30px 40px;
-            font-size: 12px;
-            color: var(--text-light);
-            border-top: 1px solid var(--border);
-        }}
-        
-        .disclaimer {{
-            margin-top: 20px;
+        .roi-calculation {{
+            color: var(--text-secondary);
             font-style: italic;
             font-size: 11px;
         }}
         
-        .source-item {{
-            margin-bottom: 5px;
+        .roi-value {{
+            text-align: right;
+            font-weight: 700;
+            font-family: 'Monaco', monospace;
         }}
         
-        .source-id {{ font-weight: bold; margin-right: 5px; }}
-        .source-link {{ color: var(--accent); text-decoration: none; margin-left: 10px; }}
+        .total-row {{
+            background: var(--surface-light);
+            border-top: 2px solid var(--accent-blue);
+            font-weight: 700;
+        }}
         
+        .total-row .roi-value {{
+            color: var(--accent-blue);
+            font-size: 14px;
+        }}
+        
+        /* Waterfall Chart */
+        .waterfall-container {{
+            margin: 30px 0;
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 20px;
+        }}
+        
+        .waterfall-title {{
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-navy);
+        }}
+        
+        .waterfall-bar {{
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }}
+        
+        .bar-label {{
+            width: 120px;
+            font-size: 11px;
+            font-weight: 500;
+        }}
+        
+        .bar-visual {{
+            height: 20px;
+            background: linear-gradient(90deg, var(--accent-blue), #3b82f6);
+            border-radius: 4px;
+            margin: 0 10px;
+            position: relative;
+        }}
+        
+        .bar-value {{
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }}
+        
+        /* Recommendations */
+        .recommendation-card {{
+            border-left: 4px solid var(--border-light);
+            padding: 20px;
+            margin: 15px 0;
+            background: var(--background);
+            border-radius: 0 8px 8px 0;
+        }}
+        
+        .priority-hoch {{ border-left-color: var(--danger-red); }}
+        .priority-mittel {{ border-left-color: var(--warning-orange); }}
+        .priority-niedrig {{ border-left-color: var(--success-green); }}
+        
+        .rec-header {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }}
+        
+        .priority-badge {{
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            margin-right: 12px;
+        }}
+        
+        .badge-hoch {{ background: var(--danger-red); }}
+        .badge-mittel {{ background: var(--warning-orange); }}
+        .badge-niedrig {{ background: var(--success-green); }}
+        
+        .rec-title {{
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0;
+        }}
+        
+        .rec-description {{
+            margin: 8px 0;
+            line-height: 1.6;
+        }}
+        
+        .rec-impact {{
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }}
+        
+        /* CTA Page */
+        .cta-page {{
+            padding: 60px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--surface-light) 0%, white 100%);
+        }}
+        
+        .cta-title {{
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--primary-navy);
+            margin: 60px 0 40px 0;
+        }}
+        
+        .steps-container {{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            margin: 60px 0;
+        }}
+        
+        .step-card {{
+            background: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+        }}
+        
+        .step-number {{
+            background: var(--accent-blue);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0 auto 20px auto;
+        }}
+        
+        .step-title {{
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-navy);
+        }}
+        
+        .contact-info {{
+            background: var(--primary-navy);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 40px 0;
+        }}
+        
+        .contact-title {{
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }}
+        
+        .contact-details {{
+            font-size: 14px;
+            line-height: 1.8;
+        }}
+        
+        .calendly-link {{
+            color: #93c5fd;
+            text-decoration: none;
+            font-weight: 500;
+        }}
+        
+        /* Sources */
+        .sources-section {{
+            margin-top: 40px;
+            font-size: 11px;
+        }}
+        
+        .source-item {{
+            margin: 8px 0;
+            line-height: 1.5;
+        }}
+        
+        .source-id {{
+            font-weight: 600;
+            color: var(--accent-blue);
+        }}
+        
+        /* Footer */
+        .page-footer {{
+            position: absolute;
+            bottom: 30px;
+            left: 60px;
+            right: 60px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-light);
+            padding-top: 15px;
+        }}
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- HEADER -->
-        <div class="report-header">
-            <div class="header-left">
-                <h1>Digital Efficiency Audit</h1>
-                <h2>{company_name}</h2>
-            </div>
-            <div class="header-right">
-                <p>Datum: {today}</p>
-                <p>Sektor: {industry_label}</p>
-                <p>Ref-ID: {chatbot_priority}-AUDIT</p>
-            </div>
-        </div>
-
-        <!-- EXECUTIVE SUMMARY -->
-        <div class="exec-summary">
-            <div class="summary-grid">
-                <div class="kpi-box">
-                    <h3>Identifiziertes Einsparpotenzial</h3>
-                    <div class="kpi-main">€ {monthly_roi:,.0f}</div>
-                    <div class="kpi-desc">Pro Monat (Konservativ geschätzt)</div>
-                </div>
-                <div class="kpi-box">
-                    <h3>ROI Faktor</h3>
-                    <div class="kpi-sub">{roi_multiplier:.1f}x</div>
-                    <div class="kpi-desc">Return on Investment</div>
-                </div>
-                <div class="kpi-box">
-                    <h3>Amortisation</h3>
-                    <div class="kpi-sub">{break_even:.1f} M</div>
-                    <div class="kpi-desc">Monate bis Break-Even</div>
-                </div>
-                <div class="kpi-box">
-                    <h3>Handlungsbedarf</h3>
-                    <div class="kpi-sub" style="color: {
-                        '#ef4444' if chatbot_priority == 'HIGH' else '#f59e0b'
-                    }">{chatbot_priority}</div>
-                    <div class="kpi-desc">Priorität der Umsetzung</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 1. STATUS QUO -->
-        <div class="section">
-            <div class="section-title">1. Technische Status-Quo Analyse</div>
-            <p style="margin-bottom: 20px;">
-                Die technische Analyse der Webpräsenz ({crawler_data.get('url', 'N/A')}) zeigt folgende Infrastruktur-Merkmale:
-            </p>
-            <table class="roi-table">
-                <tr>
-                    <th>Parameter</th>
-                    <th>Status</th>
-                    <th>Bewertung</th>
-                </tr>
-                <tr>
-                    <td>Informationsarchitektur</td>
-                    <td>{website_check.get('pages', 0)} indexierte Seiten</td>
-                    <td>{'Hohe Komplexität' if website_check.get('pages', 0) > 20 else 'Standard'}</td>
-                </tr>
-                <tr>
-                    <td>Internationalisierung</td>
-                    <td>{website_check.get('languages', 1)} Sprachen erkannt</td>
-                    <td>{'Erweiterungsbedarf' if website_check.get('languages', 1) < 2 else 'International ausgerichtet'}</td>
-                </tr>
-                <tr>
-                    <td>Automatisierungsgrad</td>
-                    <td>{chatbot_analysis.get('chatbot_type')}</td>
-                    <td>{'Kritisch (Manuelle Prozesse)' if not chatbot_analysis.get('has_chatbot') else 'Vorhanden'}</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- 2. INEFFIZIENZEN -->
-        <div class="section">
-            <div class="section-title">2. Identifizierte Ineffizienzen & Risiken</div>
-            <div class="audit-grid">
-                {pain_points_html}
-            </div>
-        </div>
-
-        <!-- 3. WIRTSCHAFTLICHKEIT -->
-        <div class="section">
-            <div class="section-title">3. Wirtschaftlichkeitsbetrachtung (ROI)</div>
-            <p style="margin-bottom: 20px; font-size: 13px; color: #666;">
-                Die folgende Berechnung basiert auf branchenspezifischen Benchmarks und den erhobenen Website-Daten. 
-                Alle Annahmen sind konservativ gewählt.
-            </p>
-            <table class="roi-table">
-                <thead>
-                    <tr>
-                        <th width="40%">Kostenstelle / Potenzial</th>
-                        <th width="40%">Berechnungsgrundlage</th>
-                        <th width="20%" style="text-align:right">Monatlicher Wert</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {roi_details_html}
-                    <tr style="background: #f1f5f9; font-weight: bold;">
-                        <td>GESAMT POTENZIAL</td>
-                        <td>Summe der operativen Einsparungen & Opportunitätskosten</td>
-                        <td style="text-align:right; color: var(--primary);">€ {monthly_roi:,.0f}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 4. EMPFEHLUNGEN -->
-        <div class="section">
-            <div class="section-title">4. Strategische Handlungsempfehlungen</div>
-            {recommendations_html}
-        </div>
-
-        <!-- FOOTER -->
-        <div class="report-footer">
-            <p><strong>Quellenverzeichnis & Methodik:</strong></p>
-            {sources_html}
+    <!-- DECKBLATT (PAGE 1) -->
+    <div class="page cover-page">
+        <div class="cover-header">
+            <div class="logo">CHATPRO AI 🤖</div>
+            <div class="cover-title">Digitale Effizienz-Analyse</div>
+            <div class="company-name">{company_name}</div>
             
-            <div class="disclaimer">
-                <p><strong>Disclaimer:</strong> Dieser Bericht wurde automatisiert durch ChatPro AI Analytics erstellt. Die ROI-Berechnungen sind Schätzungen basierend auf öffentlichen Daten und Branchen-Durchschnittswerten. Sie stellen keine garantierte Finanzzusage dar.</p>
-                <p>© 2026 ChatPro AI - FITCOACHAI LTD. Vertrauliches Dokument.</p>
+            <div class="cover-meta">
+                <div>
+                    <strong>Branche:</strong><br>{industry_label}
+                </div>
+                <div>
+                    <strong>Analysedatum:</strong><br>{today}
+                </div>
+                <div>
+                    <strong>Referenz-ID:</strong><br>CPA-{report_id}
+                </div>
+                <div>
+                    <strong>Handlungspriorität:</strong><br>{chatbot_priority_de}
+                </div>
             </div>
+        </div>
+        
+        <div class="cover-footer">
+            Vertraulich — Erstellt von ChatPro AI Analytics<br>
+            © 2026 FITCOACHAI LTD. — Alle Rechte vorbehalten
+        </div>
+    </div>
+
+    <!-- EXECUTIVE SUMMARY (PAGE 2) -->
+    <div class="page exec-page">
+        <h1 class="page-title">Executive Summary</h1>
+        
+        <!-- Ampel-Scoring-System -->
+        <div class="traffic-lights">
+            {scoring_html}
+        </div>
+        
+        <!-- KPI-Boxen -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Einsparpotenzial</div>
+                <div class="kpi-value">€ {monthly_roi:,.0f}</div>
+                <div class="kpi-unit">pro Monat</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">ROI-Faktor</div>
+                <div class="kpi-value">{roi_multiplier:.1f}x</div>
+                <div class="kpi-unit">Rendite-Multiplikator</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Amortisation</div>
+                <div class="kpi-value">{break_even:.1f}</div>
+                <div class="kpi-unit">Monate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Handlungsbedarf</div>
+                <div class="kpi-value" style="color: {
+                    'var(--danger-red)' if chatbot_priority_de == 'HOCH' else 
+                    'var(--warning-orange)' if chatbot_priority_de == 'MITTEL' else 
+                    'var(--success-green)'
+                }">{chatbot_priority_de}</div>
+                <div class="kpi-unit">Prioritätsstufe</div>
+            </div>
+        </div>
+        
+        <!-- Management Summary -->
+        <div class="management-summary">
+            <strong>Management Summary:</strong> Die Analyse zeigt erhebliches Optimierungspotenzial in der digitalen Kundeninteraktion. 
+            Durch strategische Automatisierung können monatlich €{monthly_roi:,.0f} an Effizienzgewinnen realisiert werden. 
+            Die Amortisation erfolgt innerhalb von {break_even:.1f} Monaten bei einem ROI-Faktor von {roi_multiplier:.1f}x.
+        </div>
+        
+        <div class="page-footer">
+            Seite 2 | Executive Summary | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- WEBSITE-ANALYSE (PAGE 3) -->
+    <div class="page content-page">
+        <div class="section-header">
+            <div class="section-number">1</div>
+            <div class="section-title">Technische Status-Quo Analyse</div>
+        </div>
+        
+        <p>Die detaillierte Analyse der bestehenden Webpräsenz <strong>{crawler_data.get('url', 'N/A')}</strong> 
+        ergab folgende technische und strukturelle Charakteristika:</p>
+        
+        {website_analysis_html}
+        
+        <div class="page-footer">
+            Seite 3 | Technische Analyse | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- IDENTIFIZIERTE INEFFIZIENZEN (PAGE 4) -->
+    <div class="page content-page">
+        <div class="section-header">
+            <div class="section-number">2</div>
+            <div class="section-title">Identifizierte Ineffizienzen & Geschäftsrisiken</div>
+        </div>
+        
+        <p>Die Analyse der operativen Prozesse zeigt kritische Schwachstellen in der Kundeninteraktion auf:</p>
+        
+        {pain_points_html}
+        
+        <div class="page-footer">
+            Seite 4 | Ineffizienzen-Analyse | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- ROI-BERECHNUNG (PAGE 5) -->
+    <div class="page content-page">
+        <div class="section-header">
+            <div class="section-number">3</div>
+            <div class="section-title">Wirtschaftlichkeitsbetrachtung (ROI-Analyse)</div>
+        </div>
+        
+        <p style="margin-bottom: 20px; color: var(--text-secondary);">
+            <em>Hinweis: Alle Berechnungen basieren auf konservativen Branchenbenchmarks und dokumentierten Effizienzgewinnen. 
+            Quellenreferenzen siehe Anhang.</em>
+        </p>
+        
+        <!-- ROI-Details Tabelle -->
+        <table class="roi-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%">Kostenstelle / Optimierungsbereich</th>
+                    <th style="width: 45%">Berechnungsgrundlage</th>
+                    <th style="width: 20%">Monatlicher Wert</th>
+                </tr>
+            </thead>
+            <tbody>
+                {roi_details_html}
+                <tr class="total-row">
+                    <td><strong>GESAMT-EINSPARPOTENZIAL</strong></td>
+                    <td><em>Summe aller identifizierten Optimierungen</em></td>
+                    <td class="roi-value"><strong>€ {monthly_roi:,.0f}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Wasserfall-Chart -->
+        {waterfall_chart_html}
+        
+        <div class="page-footer">
+            Seite 5 | ROI-Berechnung | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- STRATEGISCHE EMPFEHLUNGEN (PAGE 6) -->
+    <div class="page content-page">
+        <div class="section-header">
+            <div class="section-number">4</div>
+            <div class="section-title">Strategische Handlungsempfehlungen</div>
+        </div>
+        
+        <p>Basierend auf der Analyseergebnisse empfehlen wir folgende priorisierte Maßnahmen:</p>
+        
+        {recommendations_html}
+        
+        <div class="page-footer">
+            Seite 6 | Strategische Empfehlungen | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- CTA-SEITE (PAGE 7) -->
+    <div class="page cta-page">
+        <h1 class="cta-title">Nächste Schritte</h1>
+        
+        <p style="font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+            Realisieren Sie das identifizierte Potenzial von <strong>€{monthly_roi:,.0f}/Monat</strong> 
+            durch strategische Digitalisierung Ihrer Kundeninteraktion.
+        </p>
+        
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-title">Kostenlose Beratung buchen</div>
+                <p>Individuelle Strategiesession zur Detailplanung und Implementierungsroadmap</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-title">Individuelles Konzept</div>
+                <p>Entwicklung einer maßgeschneiderten Lösung für Ihre spezifischen Anforderungen</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-title">Implementierung</div>
+                <p>Professionelle Umsetzung mit Erfolgsgarantie und kontinuierlicher Optimierung</p>
+            </div>
+        </div>
+        
+        <div class="contact-info">
+            <div class="contact-title">Direktkontakt für Rückfragen</div>
+            <div class="contact-details">
+                <strong>Beratungstermin buchen:</strong><br>
+                <a href="https://calendly.com/chatproaiio/30min" class="calendly-link" target="_blank">
+                    calendly.com/chatproaiio/30min
+                </a><br><br>
+                
+                <strong>E-Mail:</strong> info@chatproai.io<br>
+                <strong>Telefon:</strong> +49 322 126 190 99<br>
+                <strong>Geschäftszeiten:</strong> Mo-Fr 9:00-18:00 Uhr
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; font-size: 12px; color: var(--text-secondary);">
+            <strong>CHATPRO AI</strong> — Premium KI-Lösungen für Unternehmenseffizienz<br>
+            FITCOACHAI LTD | Spezialisiert auf B2B-Automatisierung & ROI-optimierte Digitalisierung
+        </div>
+        
+        <div class="page-footer">
+            Seite 7 | Handlungsempfehlungen | ChatPro AI Analytics
+        </div>
+    </div>
+
+    <!-- QUELLENVERZEICHNIS (PAGE 8) -->
+    <div class="page content-page">
+        <div class="section-header">
+            <div class="section-number">A</div>
+            <div class="section-title">Quellenverzeichnis & Methodik</div>
+        </div>
+        
+        <h3 style="color: var(--primary-navy); margin-bottom: 15px;">Datengrundlagen:</h3>
+        <div class="sources-section">
+            {sources_html}
+        </div>
+        
+        <h3 style="color: var(--primary-navy); margin: 30px 0 15px 0;">Analysemethodik:</h3>
+        <p style="font-size: 12px; line-height: 1.6;">
+            Die vorliegende Analyse basiert auf einer systematischen Auswertung der technischen Webpräsenz, 
+            kombiniert mit branchenspezifischen Benchmarks und dokumentierten Best Practices. 
+            Alle ROI-Berechnungen wurden nach konservativen Annahmen durchgeführt, um realistische 
+            Erwartungswerte zu gewährleisten.
+        </p>
+        
+        <h3 style="color: var(--primary-navy); margin: 30px 0 15px 0;">Haftungsausschluss:</h3>
+        <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
+            Dieser Bericht wurde durch KI-gestützte Analyse erstellt. Die ROI-Projektionen stellen 
+            Schätzungen basierend auf Branchendurchschnittswerten dar und können nicht als Garantie 
+            für tatsächliche Ergebnisse interpretiert werden. Einzelergebnisse können variieren.
+        </p>
+        
+        <div class="page-footer">
+            Seite 8 | Quellenverzeichnis | ChatPro AI Analytics — Bericht generiert am {today}
         </div>
     </div>
 
 </body>
 </html>
 """
+        return html
+    
+    def _generate_scoring_system(self, chatbot_priority: str, website_check: Dict) -> str:
+        """Generate traffic light scoring system for different areas"""
+        
+        # Automatisierung Status
+        automation_color = "🔴" if not website_check.get('has_chatbot') else "🟢"
+        automation_status = "KRITISCH" if not website_check.get('has_chatbot') else "GUT"
+        
+        # Skalierbarkeit
+        scalability_color = "🟡" if website_check.get('pages', 0) > 15 else "🟢"
+        scalability_status = "OPTIMIERBAR" if website_check.get('pages', 0) > 15 else "GUT"
+        
+        # Effizienz
+        efficiency_color = "🔴" if chatbot_priority == "HIGH" else ("🟡" if chatbot_priority == "MEDIUM" else "🟢")
+        efficiency_status = "NIEDRIG" if chatbot_priority == "HIGH" else ("MITTEL" if chatbot_priority == "MEDIUM" else "HOCH")
+        
+        # Wettbewerbsfähigkeit
+        competitive_color = "🟡" if website_check.get('languages', 1) < 2 else "🟢"
+        competitive_status = "AUSBAUFÄHIG" if website_check.get('languages', 1) < 2 else "STARK"
+        
+        return f"""
+            <div class="traffic-light">
+                <div class="traffic-icon">{automation_color}</div>
+                <div class="traffic-label">Automatisierung</div>
+                <div style="font-weight: 600; font-size: 12px;">{automation_status}</div>
+            </div>
+            <div class="traffic-light">
+                <div class="traffic-icon">{scalability_color}</div>
+                <div class="traffic-label">Skalierbarkeit</div>
+                <div style="font-weight: 600; font-size: 12px;">{scalability_status}</div>
+            </div>
+            <div class="traffic-light">
+                <div class="traffic-icon">{efficiency_color}</div>
+                <div class="traffic-label">Prozesseffizienz</div>
+                <div style="font-weight: 600; font-size: 12px;">{efficiency_status}</div>
+            </div>
+            <div class="traffic-light">
+                <div class="traffic-icon">{competitive_color}</div>
+                <div class="traffic-label">Wettbewerbsposition</div>
+                <div style="font-weight: 600; font-size: 12px;">{competitive_status}</div>
+            </div>
+        """
+    
+    def _generate_website_analysis_html(self, website_check: Dict, crawler_data: Dict) -> str:
+        """Generate website analysis table"""
+        
+        mobile_status = "✅ Optimiert" if website_check.get('mobile_friendly') else "❌ Nicht optimiert"
+        mobile_class = "status-good" if website_check.get('mobile_friendly') else "status-critical"
+        
+        chatbot_status = "❌ Nicht vorhanden" if not website_check.get('has_chatbot') else f"✅ {website_check.get('chatbot_type')}"
+        chatbot_class = "status-critical" if not website_check.get('has_chatbot') else "status-good"
+        
+        complexity = "⚠️ Hoch" if website_check.get('pages', 0) > 20 else "✅ Standard"
+        complexity_class = "status-warning" if website_check.get('pages', 0) > 20 else "status-good"
+        
+        return f"""
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>Analyseparameter</th>
+                    <th>Ist-Zustand</th>
+                    <th>Bewertung</th>
+                    <th>Geschäftsimpact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Informationsarchitektur</strong></td>
+                    <td>{website_check.get('pages', 0)} indexierte Seiten</td>
+                    <td><span class="status-icon {complexity_class}">{complexity}</span></td>
+                    <td>{'Hoher Support-Bedarf durch Komplexität' if website_check.get('pages', 0) > 20 else 'Überschaubare Struktur'}</td>
+                </tr>
+                <tr>
+                    <td><strong>Mobile Optimierung</strong></td>
+                    <td>Responsive Design</td>
+                    <td><span class="status-icon {mobile_class}">{mobile_status}</span></td>
+                    <td>{'Nutzerfreundliche mobile Experience' if website_check.get('mobile_friendly') else 'Potenzielle Abbrüche bei mobilen Nutzern'}</td>
+                </tr>
+                <tr>
+                    <td><strong>Kundenservice-Automatisierung</strong></td>
+                    <td>{website_check.get('chatbot_type', 'Keine Automatisierung')}</td>
+                    <td><span class="status-icon {chatbot_class}">{chatbot_status}</span></td>
+                    <td>{'Manuelle Bearbeitung aller Anfragen erforderlich' if not website_check.get('has_chatbot') else 'Teilautomatisierte Kundenbetreuung'}</td>
+                </tr>
+                <tr>
+                    <td><strong>Internationalisierung</strong></td>
+                    <td>{website_check.get('languages', 1)} Sprache(n) erkannt</td>
+                    <td><span class="status-icon {'status-warning' if website_check.get('languages', 1) < 2 else 'status-good'}">
+                        {'⚠️ Monolingual' if website_check.get('languages', 1) < 2 else '✅ Multilingual'}</span></td>
+                    <td>{'Begrenzte Zielgruppenreichweite' if website_check.get('languages', 1) < 2 else 'Internationale Markterschließung möglich'}</td>
+                </tr>
+            </tbody>
+        </table>
+        """
+    
+    def _generate_pain_points_html(self, pain_points: List[Dict]) -> str:
+        """Generate risk cards for identified pain points"""
+        
+        if not pain_points:
+            return """
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                <em>Keine kritischen Ineffizienzen identifiziert.</em>
+            </div>
+            """
+        
+        html = '<div class="risk-grid">'
+        
+        for i, pp in enumerate(pain_points[:4], 1):
+            html += f"""
+            <div class="risk-card">
+                <div class="risk-header">
+                    <div class="risk-id">RISIKO #{i}</div>
+                    <h4 class="risk-title">{pp.get('problem', 'N/A')}</h4>
+                </div>
+                <div class="risk-body">
+                    <div class="risk-impact">
+                        <strong>Wirtschaftliche Auswirkung:</strong><br>
+                        {pp.get('impact', 'N/A')}
+                    </div>
+                    <div class="risk-evidence">
+                        <strong>Daten-Evidenz:</strong> {pp.get('evidence', 'N/A')}
+                        {' [' + ', '.join(pp.get('source_ids', [])) + ']' if pp.get('source_ids') else ''}
+                    </div>
+                </div>
+            </div>
+            """
+        
+        html += '</div>'
+        return html
+    
+    def _generate_roi_details_html(self, roi_calc: Dict) -> str:
+        """Generate ROI calculation table rows"""
+        
+        calculations = roi_calc.get('calculations', [])
+        if not calculations:
+            return """
+            <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <em>Keine detaillierten ROI-Berechnungen verfügbar.</em>
+                </td>
+            </tr>
+            """
+        
+        html = ""
+        for calc in calculations:
+            source_refs = ""
+            if calc.get('source_ids'):
+                source_refs = " [" + ", ".join(calc.get('source_ids', [])) + "]"
+            
+            html += f"""
+            <tr>
+                <td class="roi-category">{calc.get('category', 'N/A')}</td>
+                <td class="roi-calculation">{calc.get('calculation', 'N/A')}{source_refs}</td>
+                <td class="roi-value">€ {calc.get('monthly_value', 0):,.0f}</td>
+            </tr>
+            """
+        
+        return html
+    
+    def _generate_waterfall_chart_html(self, roi_calc: Dict) -> str:
+        """Generate CSS-based waterfall chart"""
+        
+        calculations = roi_calc.get('calculations', [])
+        if not calculations:
+            return ""
+        
+        max_value = max([calc.get('monthly_value', 0) for calc in calculations] + [1])
+        
+        html = """
+        <div class="waterfall-container">
+            <div class="waterfall-title">Aufschlüsselung der monatlichen Einsparungen</div>
+        """
+        
+        for calc in calculations:
+            value = calc.get('monthly_value', 0)
+            width_pct = (value / max_value) * 100
+            
+            html += f"""
+            <div class="waterfall-bar">
+                <div class="bar-label">{calc.get('category', 'N/A')[:15]}...</div>
+                <div class="bar-visual" style="width: {width_pct}%"></div>
+                <div class="bar-value">€ {value:,.0f}</div>
+            </div>
+            """
+        
+        html += "</div>"
+        return html
+    
+    def _generate_recommendations_html(self, recommendations: List[Dict], priority_map: Dict) -> str:
+        """Generate recommendation cards with German priority levels"""
+        
+        if not recommendations:
+            return """
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                <em>Keine spezifischen Empfehlungen verfügbar.</em>
+            </div>
+            """
+        
+        html = ""
+        
+        for rec in recommendations:
+            priority = rec.get('priority', 'MEDIUM')
+            priority_de = priority_map.get(priority, 'MITTEL').lower()
+            
+            html += f"""
+            <div class="recommendation-card priority-{priority_de}">
+                <div class="rec-header">
+                    <div class="priority-badge badge-{priority_de}">{priority_map.get(priority, 'MITTEL')} PRIORITÄT</div>
+                    <h4 class="rec-title">{rec.get('title', 'N/A')}</h4>
+                </div>
+                <div class="rec-description">{rec.get('description', 'N/A')}</div>
+                <div class="rec-impact">
+                    <strong>Erwarteter Impact:</strong> {rec.get('impact', 'N/A')}<br>
+                    <strong>Umsetzung:</strong> {rec.get('implementation', 'N/A')}
+                </div>
+            </div>
+            """
+        
+        return html
+    
+    def _generate_sources_html(self, sources: List[Dict]) -> str:
+        """Generate sources list"""
+        
+        if not sources:
+            return """
+            <div class="source-item">
+                <em>Keine externen Quellen referenziert. Analyse basiert auf internen Benchmarks und Best Practices.</em>
+            </div>
+            """
+        
+        html = ""
+        
+        for source in sources:
+            source_id = source.get('id', '?')
+            title = source.get('title', 'Unbekannte Quelle')
+            url = source.get('url', '#')
+            year = source.get('year', datetime.now().year)
+            
+            html += f"""
+            <div class="source-item">
+                <span class="source-id">[{source_id}]</span> 
+                {title}, {year} — <a href="{url}" target="_blank" style="color: var(--accent-blue);">{url}</a>
+            </div>
+            """
+        
         return html
