@@ -152,13 +152,22 @@ class PDFReportGenerator:
         }}
         
         .page {{
-            min-height: 100vh;
-            page-break-after: always;
             position: relative;
         }}
         
-        .page:last-child {{
-            page-break-after: avoid;
+        /* Nur Deckblatt und CTA bekommen eigene Seite */
+        .cover-page {{
+            min-height: 100vh;
+            page-break-after: always;
+        }}
+        
+        .cta-page {{
+            page-break-before: always;
+        }}
+        
+        /* Quellenverzeichnis auf eigene Seite */
+        .sources-page {{
+            page-break-before: always;
         }}
         
         /* === DECKBLATT (PAGE 1) === */
@@ -213,16 +222,16 @@ class PDFReportGenerator:
             padding-top: 20px;
         }}
         
-        /* === EXECUTIVE SUMMARY (PAGE 2) === */
+        /* === EXECUTIVE SUMMARY === */
         .exec-page {{
-            padding: 40px 50px;
+            padding: 30px 50px 20px 50px;
         }}
         
         .page-title {{
             font-size: 24px;
             font-weight: 600;
             color: var(--primary-navy);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             position: relative;
         }}
         
@@ -239,8 +248,8 @@ class PDFReportGenerator:
         .traffic-lights {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 25px 0;
+            gap: 12px;
+            margin: 15px 0;
         }}
         
         .traffic-light {{
@@ -266,8 +275,8 @@ class PDFReportGenerator:
         .kpi-grid {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 15px 0;
         }}
         
         .kpi-card {{
@@ -302,21 +311,22 @@ class PDFReportGenerator:
         .management-summary {{
             background: var(--surface-light);
             border-left: 4px solid var(--accent-blue);
-            padding: 18px 22px;
-            margin: 20px 0;
+            padding: 14px 18px;
+            margin: 15px 0;
             font-size: 12px;
-            line-height: 1.6;
+            line-height: 1.5;
         }}
         
         /* === STANDARD CONTENT PAGES === */
         .content-page {{
-            padding: 35px 50px;
+            padding: 25px 50px 15px 50px;
         }}
         
         .section-header {{
             display: flex;
             align-items: center;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
         }}
         
         .section-number {{
@@ -373,8 +383,8 @@ class PDFReportGenerator:
         .risk-grid {{
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
+            gap: 10px;
+            margin: 10px 0;
         }}
         
         .risk-card {{
@@ -382,6 +392,7 @@ class PDFReportGenerator:
             border-radius: 8px;
             overflow: hidden;
             background: var(--background);
+            page-break-inside: avoid;
         }}
         
         .risk-header {{
@@ -409,7 +420,7 @@ class PDFReportGenerator:
         }}
         
         .risk-body {{
-            padding: 14px 16px;
+            padding: 10px 14px;
         }}
         
         .risk-impact {{
@@ -475,10 +486,11 @@ class PDFReportGenerator:
         
         /* Waterfall Chart */
         .waterfall-container {{
-            margin: 30px 0;
+            margin: 15px 0;
             background: var(--surface-light);
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
+            page-break-inside: avoid;
         }}
         
         .waterfall-title {{
@@ -517,10 +529,11 @@ class PDFReportGenerator:
         /* Recommendations */
         .recommendation-card {{
             border-left: 4px solid var(--border-light);
-            padding: 14px 18px;
-            margin: 10px 0;
+            padding: 10px 16px;
+            margin: 8px 0;
             background: var(--background);
             border-radius: 0 8px 8px 0;
+            page-break-inside: avoid;
         }}
         
         .priority-hoch, .priority-sofort {{ border-left-color: var(--danger-red); }}
@@ -565,7 +578,7 @@ class PDFReportGenerator:
         
         /* CTA Page */
         .cta-page {{
-            padding: 40px 50px;
+            padding: 30px 50px;
             text-align: center;
             background: linear-gradient(135deg, var(--surface-light) 0%, white 100%);
         }}
@@ -580,8 +593,8 @@ class PDFReportGenerator:
         .steps-container {{
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 25px;
-            margin: 30px 0;
+            gap: 18px;
+            margin: 20px 0;
         }}
         
         .step-card {{
@@ -654,17 +667,9 @@ class PDFReportGenerator:
             color: var(--accent-blue);
         }}
         
-        /* Footer */
-        .page-footer {{
-            position: absolute;
-            bottom: 30px;
-            left: 60px;
-            right: 60px;
-            text-align: center;
-            font-size: 10px;
-            color: var(--text-secondary);
+        /* Separator between flowing sections */
+        .content-page + .content-page {{
             border-top: 1px solid var(--border-light);
-            padding-top: 15px;
         }}
     </style>
 </head>
@@ -699,8 +704,8 @@ class PDFReportGenerator:
         </div>
     </div>
 
-    <!-- EXECUTIVE SUMMARY (PAGE 2) -->
-    <div class="page exec-page">
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="exec-page">
         <h1 class="page-title">Executive Summary</h1>
         
         <!-- Ampel-Scoring-System -->
@@ -742,14 +747,10 @@ class PDFReportGenerator:
             Durch strategische Automatisierung können monatlich €{monthly_roi:,.0f} an Effizienzgewinnen realisiert werden. 
             Die Amortisation erfolgt innerhalb von {break_even:.1f} Monaten bei einem ROI-Faktor von {roi_multiplier:.1f}x.
         </div>
-        
-        <div class="page-footer">
-            Seite 2 | Executive Summary | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- WEBSITE-ANALYSE (PAGE 3) -->
-    <div class="page content-page">
+    <!-- WEBSITE-ANALYSE -->
+    <div class="content-page">
         <div class="section-header">
             <div class="section-number">1</div>
             <div class="section-title">Technische Status-Quo Analyse</div>
@@ -759,14 +760,10 @@ class PDFReportGenerator:
         ergab folgende technische und strukturelle Charakteristika:</p>
         
         {website_analysis_html}
-        
-        <div class="page-footer">
-            Seite 3 | Technische Analyse | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- IDENTIFIZIERTE INEFFIZIENZEN (PAGE 4) -->
-    <div class="page content-page">
+    <!-- IDENTIFIZIERTE INEFFIZIENZEN -->
+    <div class="content-page">
         <div class="section-header">
             <div class="section-number">2</div>
             <div class="section-title">Identifizierte Ineffizienzen & Geschäftsrisiken</div>
@@ -775,20 +772,16 @@ class PDFReportGenerator:
         <p>Die Analyse der operativen Prozesse zeigt kritische Schwachstellen in der Kundeninteraktion auf:</p>
         
         {pain_points_html}
-        
-        <div class="page-footer">
-            Seite 4 | Ineffizienzen-Analyse | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- ROI-BERECHNUNG (PAGE 5) -->
-    <div class="page content-page">
+    <!-- ROI-BERECHNUNG -->
+    <div class="content-page">
         <div class="section-header">
             <div class="section-number">3</div>
             <div class="section-title">Wirtschaftlichkeitsbetrachtung (ROI-Analyse)</div>
         </div>
         
-        <p style="margin-bottom: 20px; color: var(--text-secondary);">
+        <p style="margin-bottom: 12px; color: var(--text-secondary);">
             <em>Hinweis: Alle Berechnungen basieren auf konservativen Branchenbenchmarks und dokumentierten Effizienzgewinnen. 
             Quellenreferenzen siehe Anhang.</em>
         </p>
@@ -814,14 +807,10 @@ class PDFReportGenerator:
         
         <!-- Wasserfall-Chart -->
         {waterfall_chart_html}
-        
-        <div class="page-footer">
-            Seite 5 | ROI-Berechnung | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- STRATEGISCHE EMPFEHLUNGEN (PAGE 6) -->
-    <div class="page content-page">
+    <!-- STRATEGISCHE EMPFEHLUNGEN -->
+    <div class="content-page">
         <div class="section-header">
             <div class="section-number">4</div>
             <div class="section-title">Strategische Handlungsempfehlungen</div>
@@ -830,14 +819,10 @@ class PDFReportGenerator:
         <p>Basierend auf der Analyseergebnisse empfehlen wir folgende priorisierte Maßnahmen:</p>
         
         {recommendations_html}
-        
-        <div class="page-footer">
-            Seite 6 | Strategische Empfehlungen | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- CTA-SEITE (PAGE 7) -->
-    <div class="page cta-page">
+    <!-- CTA-SEITE -->
+    <div class="cta-page">
         <h1 class="cta-title">Nächste Schritte</h1>
         
         <p style="font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
@@ -877,18 +862,14 @@ class PDFReportGenerator:
             </div>
         </div>
         
-        <div style="margin-top: 40px; font-size: 12px; color: var(--text-secondary);">
+        <div style="margin-top: 25px; font-size: 12px; color: var(--text-secondary);">
             <strong>CHATPRO AI</strong> — Premium KI-Lösungen für Unternehmenseffizienz<br>
             FITCOACHAI LTD | Spezialisiert auf B2B-Automatisierung & ROI-optimierte Digitalisierung
         </div>
-        
-        <div class="page-footer">
-            Seite 7 | Handlungsempfehlungen | ChatPro AI Analytics
-        </div>
     </div>
 
-    <!-- QUELLENVERZEICHNIS (PAGE 8) -->
-    <div class="page content-page">
+    <!-- QUELLENVERZEICHNIS -->
+    <div class="content-page sources-page">
         <div class="section-header">
             <div class="section-number">A</div>
             <div class="section-title">Quellenverzeichnis & Methodik</div>
@@ -914,8 +895,8 @@ class PDFReportGenerator:
             für tatsächliche Ergebnisse interpretiert werden. Einzelergebnisse können variieren.
         </p>
         
-        <div class="page-footer">
-            Seite 8 | Quellenverzeichnis | ChatPro AI Analytics — Bericht generiert am {today}
+        <div style="margin-top: 30px; text-align: center; font-size: 10px; color: var(--text-secondary); border-top: 1px solid var(--border-light); padding-top: 15px;">
+            ChatPro AI Analytics — Bericht generiert am {today}
         </div>
     </div>
 
