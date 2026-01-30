@@ -26,7 +26,7 @@ class PDFReportGenerator:
         output_path: str,
         sources: List[Dict] = None
     ) -> str:
-        """Generate McKinsey-style HTML report in German"""
+        """Generate McKinsey-style PDF report in German"""
         
         html_content = self._generate_html(
             crawler_data,
@@ -36,13 +36,38 @@ class PDFReportGenerator:
             sources or []
         )
         
-        html_path = output_path
-        os.makedirs(os.path.dirname(html_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
+        # Write HTML first (temp)
+        html_path = output_path.replace('.pdf', '.html')
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        return html_path
+        # Convert to PDF using Playwright Chromium
+        pdf_path = output_path if output_path.endswith('.pdf') else output_path.replace('.html', '.pdf')
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(f'file://{os.path.abspath(html_path)}', wait_until='networkidle')
+                page.pdf(
+                    path=pdf_path,
+                    format='A4',
+                    print_background=True,
+                    margin={'top': '0', 'right': '0', 'bottom': '0', 'left': '0'}
+                )
+                browser.close()
+            print(f"  ✅ PDF created: {pdf_path}")
+            # Clean up HTML temp file
+            try:
+                os.remove(html_path)
+            except:
+                pass
+            return pdf_path
+        except Exception as e:
+            print(f"  ⚠️ PDF conversion failed ({e}), falling back to HTML")
+            return html_path
     
     def _generate_html(
         self,

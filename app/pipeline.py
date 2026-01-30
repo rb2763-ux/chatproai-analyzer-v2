@@ -113,7 +113,7 @@ class AnalysisPipeline:
             pdf_start = datetime.now()
             print(f"\n[{analysis_id[:8]}] Step 3/4: Generating PDF Report...")
             
-            report_filename = f"chatpro_analyse_{analysis_id[:8]}.html"
+            report_filename = f"chatpro_analyse_{analysis_id[:8]}.pdf"
             report_path = os.path.join(self.output_dir, report_filename)
             
             generated_path = self.pdf_generator.generate(
