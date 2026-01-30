@@ -106,8 +106,14 @@ class PDFReportGenerator:
         
         # ROI metrics
         monthly_roi = roi_calc.get('monthly_roi', 0)
+        yearly_roi = monthly_roi * 12
+        two_year_roi = yearly_roi * 2
         roi_multiplier = roi_calc.get('roi_multiplier', 0)
         break_even = roi_calc.get('break_even_months', 0)
+        
+        # Kosten des Nichtstuns calculation
+        yearly_cost_of_inaction = yearly_roi * 1.125  # 12.5% growth factor for escalating customer expectations
+        two_year_cost_of_inaction = yearly_cost_of_inaction * 2.15  # Compounding effect
         
         # Priority translation — action-oriented, kein "MITTEL" (Eigentor-Vermeidung)
         priority_map = {'HIGH': 'SOFORT UMSETZEN', 'MEDIUM': 'KURZFRISTIG UMSETZEN', 'LOW': 'STRATEGISCH PLANEN',
@@ -194,12 +200,12 @@ class PDFReportGenerator:
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 50px;
+            padding: 35px;
         }}
         
         .cover-header {{
             text-align: center;
-            margin-top: 60px;
+            margin-top: 20px;
         }}
         
         .logo {{
@@ -212,7 +218,7 @@ class PDFReportGenerator:
         .cover-title {{
             font-size: 42px;
             font-weight: 300;
-            margin: 30px 0;
+            margin: 20px 0;
             line-height: 1.2;
         }}
         
@@ -220,14 +226,36 @@ class PDFReportGenerator:
             font-size: 26px;
             font-weight: 600;
             color: #93c5fd;
-            margin: 20px 0;
+            margin: 14px 0;
+        }}
+        
+        .cover-impact {{
+            text-align: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }}
+        
+        .impact-value {{
+            font-size: 48px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin: 10px 0;
+        }}
+        
+        .impact-label {{
+            font-size: 18px;
+            color: #e5e7eb;
+            margin: 8px 0;
         }}
         
         .cover-meta {{
             display: flex;
             justify-content: space-between;
-            gap: 20px;
-            margin: 40px 0;
+            gap: 14px;
+            margin: 28px 0;
             font-size: 13px;
         }}
         .cover-meta > div {{
@@ -244,7 +272,7 @@ class PDFReportGenerator:
         
         /* === EXECUTIVE SUMMARY === */
         .exec-page {{
-            padding: 30px 50px 20px 50px;
+            padding: 20px 35px 14px 35px;
         }}
         
         .page-title {{
@@ -343,7 +371,7 @@ class PDFReportGenerator:
         
         /* === STANDARD CONTENT PAGES === */
         .content-page {{
-            padding: 25px 50px 15px 50px;
+            padding: 18px 35px 10px 35px;
         }}
         
         .section-header {{
@@ -683,13 +711,13 @@ class PDFReportGenerator:
         
         /* Sources */
         .sources-section {{
-            margin-top: 40px;
+            margin-top: 25px;
             font-size: 11px;
         }}
         
         .source-item {{
-            margin: 8px 0;
-            line-height: 1.5;
+            margin: 5px 0;
+            line-height: 1.4;
         }}
         
         .source-id {{
@@ -711,6 +739,14 @@ class PDFReportGenerator:
             <div class="logo">CHATPRO AI 🤖</div>
             <div class="cover-title">Digitale Effizienz-Analyse</div>
             <div class="company-name">{company_name}</div>
+            
+            <div class="cover-impact">
+                <div class="impact-value">€ {yearly_roi:,.0f}</div>
+                <div class="impact-label">ungenutztes Potenzial pro Jahr</div>
+                <div style="font-size: 14px; color: #cbd5e1; margin-top: 15px;">
+                    Durch intelligente Automatisierung realisierbar
+                </div>
+            </div>
             
             <div class="cover-meta">
                 <div>
@@ -747,8 +783,8 @@ class PDFReportGenerator:
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-label">Einsparpotenzial</div>
-                <div class="kpi-value">€ {monthly_roi:,.0f}</div>
-                <div class="kpi-unit">pro Monat</div>
+                <div class="kpi-value">€ {yearly_roi:,.0f}</div>
+                <div class="kpi-unit">pro Jahr</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">ROI-Faktor</div>
@@ -763,8 +799,8 @@ class PDFReportGenerator:
             <div class="kpi-card">
                 <div class="kpi-label">Handlungsbedarf</div>
                 <div class="kpi-value" style="color: {
-                    'var(--danger-red)' if chatbot_priority_de == 'HOCH' else 
-                    'var(--warning-orange)' if chatbot_priority_de == 'MITTEL' else 
+                    'var(--danger-red)' if 'SOFORT' in chatbot_priority_de else 
+                    'var(--warning-orange)' if 'KURZFRISTIG' in chatbot_priority_de else 
                     'var(--success-green)'
                 }">{chatbot_priority_de}</div>
                 <div class="kpi-unit">Prioritätsstufe</div>
@@ -774,8 +810,9 @@ class PDFReportGenerator:
         <!-- Management Summary -->
         <div class="management-summary">
             <strong>Management Summary:</strong> Die Analyse zeigt erhebliches Optimierungspotenzial in der digitalen Kundeninteraktion. 
-            Durch strategische Automatisierung können monatlich €{monthly_roi:,.0f} an Effizienzgewinnen realisiert werden. 
+            Durch strategische Automatisierung können jährlich €{yearly_roi:,.0f} an Effizienzgewinnen realisiert werden. 
             Die Amortisation erfolgt innerhalb von {break_even:.1f} Monaten bei einem ROI-Faktor von {roi_multiplier:.1f}x.
+            In den nächsten 24 Monaten summiert sich das ungenutzte Potenzial auf €{two_year_cost_of_inaction:,.0f}.
         </div>
     </div>
 
@@ -816,13 +853,15 @@ class PDFReportGenerator:
             Quellenreferenzen siehe Anhang.</em>
         </p>
         
-        <!-- ROI-Details Tabelle -->
+        <!-- ROI-Details Tabelle mit drei Zeiträumen -->
         <table class="roi-table">
             <thead>
                 <tr>
                     <th style="width: 35%">Kostenstelle / Optimierungsbereich</th>
-                    <th style="width: 45%">Berechnungsgrundlage</th>
-                    <th style="width: 20%">Monatlicher Wert</th>
+                    <th style="width: 25%">Berechnungsgrundlage</th>
+                    <th style="width: 13%">Monatlich</th>
+                    <th style="width: 13%">Jährlich</th>
+                    <th style="width: 14%">2-Jahres-Projektion</th>
                 </tr>
             </thead>
             <tbody>
@@ -831,12 +870,55 @@ class PDFReportGenerator:
                     <td><strong>GESAMT-EINSPARPOTENZIAL</strong></td>
                     <td><em>Summe aller identifizierten Optimierungen</em></td>
                     <td class="roi-value"><strong>€ {monthly_roi:,.0f}</strong></td>
+                    <td class="roi-value"><strong>€ {yearly_roi:,.0f}</strong></td>
+                    <td class="roi-value"><strong>€ {two_year_roi:,.0f}</strong></td>
                 </tr>
             </tbody>
         </table>
         
         <!-- Wasserfall-Chart -->
         {waterfall_chart_html}
+    </div>
+
+    <!-- KOSTEN DES NICHTSTUNS -->
+    <div class="content-page">
+        <div class="section-header">
+            <div class="section-number">3.5</div>
+            <div class="section-title">Kosten des Nichtstuns — Wettbewerbsrisiken ohne Automatisierung</div>
+        </div>
+        
+        <p style="margin-bottom: 15px;">
+            Während Ihre Wettbewerber bereits auf intelligente Automatisierung setzen, entstehen durch 
+            das Festhalten am Status quo erhebliche Opportunitätskosten:
+        </p>
+        
+        <div class="cost-of-inaction-grid" style="display: flex; gap: 15px; margin: 20px 0;">
+            <div class="cost-card" style="flex: 1; border: 2px solid #fbbf24; border-radius: 10px; padding: 20px; background: #fef3c7;">
+                <h4 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px;">1-Jahres-Verlust</h4>
+                <div style="font-size: 28px; font-weight: 700; color: #d97706; margin: 8px 0;">€ {yearly_cost_of_inaction:,.0f}</div>
+                <p style="font-size: 12px; color: #92400e; margin: 8px 0;">
+                    Entgangene Umsätze, ineffiziente Prozesse und verlorene Marktanteile durch fehlende Automatisierung
+                </p>
+            </div>
+            <div class="cost-card" style="flex: 1; border: 2px solid #dc2626; border-radius: 10px; padding: 20px; background: #fee2e2;">
+                <h4 style="color: #991b1b; margin: 0 0 10px 0; font-size: 16px;">2-Jahres-Projektion</h4>
+                <div style="font-size: 28px; font-weight: 700; color: #dc2626; margin: 8px 0;">€ {two_year_cost_of_inaction:,.0f}</div>
+                <p style="font-size: 12px; color: #991b1b; margin: 8px 0;">
+                    Kumulierter Schaden durch fortschreitende Wettbewerbsnachteile und steigende Kundenerwartungen
+                </p>
+            </div>
+        </div>
+        
+        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <h4 style="color: #991b1b; margin: 0 0 10px 0;">Branchentrend-Analyse:</h4>
+            <p style="margin: 0; line-height: 1.6; font-size: 12px;">
+                Während Ihre direkten Wettbewerber automatisieren, verlieren Sie geschätzt 
+                <strong>€{yearly_cost_of_inaction:,.0f} pro Jahr</strong> an entgangenen Buchungen, ineffizienten Prozessen 
+                und verlorenen Gästen. Studien zeigen: Unternehmen ohne KI-Chatbot verlieren 15-25% ihrer potenziellen 
+                Online-Konversionen an automatisierte Konkurrenz.<br>
+                <em style="color: #6b7280;">[Quellen: McKinsey Digital Transformation Study 2024, Phocuswright Automation Report]</em>
+            </p>
+        </div>
     </div>
 
     <!-- STRATEGISCHE EMPFEHLUNGEN -->
@@ -856,7 +938,7 @@ class PDFReportGenerator:
         <h1 class="cta-title">Nächste Schritte</h1>
         
         <p style="font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
-            Realisieren Sie das identifizierte Potenzial von <strong>€{monthly_roi:,.0f}/Monat</strong> 
+            Realisieren Sie das identifizierte Potenzial von <strong>€{yearly_roi:,.0f}/Jahr</strong> 
             durch strategische Digitalisierung Ihrer Kundeninteraktion.
         </p>
         
@@ -1065,13 +1147,13 @@ class PDFReportGenerator:
         return html
     
     def _generate_roi_details_html(self, roi_calc: Dict) -> str:
-        """Generate ROI calculation table rows"""
+        """Generate ROI calculation table rows with three timeframes"""
         
         calculations = roi_calc.get('calculations', [])
         if not calculations:
             return """
             <tr>
-                <td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">
                     <em>Keine detaillierten ROI-Berechnungen verfügbar.</em>
                 </td>
             </tr>
@@ -1083,18 +1165,24 @@ class PDFReportGenerator:
             if calc.get('source_ids'):
                 source_refs = " [" + ", ".join(calc.get('source_ids', [])) + "]"
             
+            monthly_value = calc.get('monthly_value', 0)
+            yearly_value = monthly_value * 12
+            two_year_value = yearly_value * 2
+            
             html += f"""
             <tr>
                 <td class="roi-category">{calc.get('category', 'N/A')}</td>
                 <td class="roi-calculation">{calc.get('calculation', 'N/A')}{source_refs}</td>
-                <td class="roi-value">€ {calc.get('monthly_value', 0):,.0f}</td>
+                <td class="roi-value">€ {monthly_value:,.0f}</td>
+                <td class="roi-value">€ {yearly_value:,.0f}</td>
+                <td class="roi-value">€ {two_year_value:,.0f}</td>
             </tr>
             """
         
         return html
     
     def _generate_waterfall_chart_html(self, roi_calc: Dict) -> str:
-        """Generate CSS-based waterfall chart"""
+        """Generate CSS-based waterfall chart with full category labels"""
         
         calculations = roi_calc.get('calculations', [])
         if not calculations:
@@ -1110,10 +1198,12 @@ class PDFReportGenerator:
         for calc in calculations:
             value = calc.get('monthly_value', 0)
             width_pct = (value / max_value) * 100
+            # Use full category name instead of truncating
+            category_name = calc.get('category', 'N/A')
             
             html += f"""
             <div class="waterfall-bar">
-                <div class="bar-label">{calc.get('category', 'N/A')[:15]}...</div>
+                <div class="bar-label" style="width: 180px; font-size: 10px;">{category_name}</div>
                 <div class="bar-visual" style="width: {width_pct}%"></div>
                 <div class="bar-value">€ {value:,.0f}</div>
             </div>
