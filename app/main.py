@@ -281,3 +281,54 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
+
+
+# ==================== PARTNER WEBHOOK ====================
+import httpx
+
+class PartnerRequest(BaseModel):
+    name: str
+    company: str
+    email: EmailStr
+    phone: str
+    website: str
+
+@app.post("/api/partner")
+async def create_partner(request: PartnerRequest):
+    """Receive partner application and save to Notion"""
+    
+    NOTION_KEY = os.getenv("NOTION_API_KEY")
+    DATABASE_ID = "2fc040f31f9d81c29f31dc85b4f9b106"
+    
+    if not NOTION_KEY:
+        raise HTTPException(status_code=500, detail="Notion API key not configured")
+    
+    notion_data = {
+        "parent": {"database_id": DATABASE_ID},
+        "properties": {
+            "Name": {"title": [{"text": {"content": request.name}}]},
+            "Firma": {"rich_text": [{"text": {"content": request.company}}]},
+            "Email": {"email": request.email},
+            "Telefon": {"phone_number": request.phone},
+            "Website": {"url": request.website},
+            "Status": {"select": {"name": "Neu"}},
+            "Eingegangen": {"date": {"start": datetime.utcnow().strftime("%Y-%m-%d")}}
+        }
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.notion.com/v1/pages",
+            headers={
+                "Authorization": f"Bearer {NOTION_KEY}",
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json"
+            },
+            json=notion_data
+        )
+    
+    if response.status_code != 200:
+        print(f"Notion error: {response.text}")
+        raise HTTPException(status_code=500, detail="Failed to save to Notion")
+    
+    return {"success": True, "message": "Partner application received"}
